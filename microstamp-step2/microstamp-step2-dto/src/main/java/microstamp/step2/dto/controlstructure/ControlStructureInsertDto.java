@@ -1,5 +1,6 @@
 package microstamp.step2.dto.controlstructure;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import microstamp.step2.dto.component.ComponentInsertDto;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ControlStructureInsertDto {
 
+    @NotNull
     private UUID analysisId;
 
     private List<ComponentInsertDto> components = new ArrayList<>();
