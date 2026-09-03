@@ -3,6 +3,7 @@ package microstamp.step2.dto.controlstructure;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import microstamp.step2.dto.component.ComponentInsertDto;
+import microstamp.step2.dto.connection.ConnectionBatchInsertDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,5 @@ public class ControlStructureInsertDto {
     private UUID analysisId;
 
     private List<ComponentInsertDto> components = new ArrayList<>();
-
-    //adicionar posteriormente a lista de connections
-
+    private List<ConnectionBatchInsertDto> Connections = new ArrayList<>();
 }
