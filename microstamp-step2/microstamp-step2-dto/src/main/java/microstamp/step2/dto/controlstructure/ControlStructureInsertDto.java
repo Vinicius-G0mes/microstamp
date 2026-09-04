@@ -20,5 +20,5 @@ public class ControlStructureInsertDto {
     private UUID analysisId;
 
     private List<ComponentInsertDto> components = new ArrayList<>();
-    private List<ConnectionBatchInsertDto> Connections = new ArrayList<>();
+    private List<ConnectionBatchInsertDto> connections = new ArrayList<>();
 }

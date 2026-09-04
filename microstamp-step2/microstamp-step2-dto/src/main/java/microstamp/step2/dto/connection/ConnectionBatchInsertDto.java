@@ -6,7 +6,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import microstamp.step2.dto.interaction.InteractionInsertDto;
 import microstamp.step2.enumeration.Style;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,4 +26,6 @@ public class ConnectionBatchInsertDto {
     private String targetCode;
 
     private Style style;
+
+    private List<InteractionInsertDto> interactions;
 }

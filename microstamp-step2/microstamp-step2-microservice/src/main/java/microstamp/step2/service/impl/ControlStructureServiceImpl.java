@@ -3,7 +3,10 @@ package microstamp.step2.service.impl;
 import microstamp.step2.dto.component.ComponentReadDto;
 import microstamp.step2.dto.connection.ConnectionBatchInsertDto;
 import microstamp.step2.dto.connection.ConnectionInsertDto;
+import microstamp.step2.dto.connection.ConnectionReadDto;
+import microstamp.step2.dto.interaction.InteractionInsertDto;
 import microstamp.step2.service.ConnectionService;
+import microstamp.step2.service.InteractionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +29,9 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
     @Autowired
     private ConnectionService connectionService;
+
+    @Autowired
+    private InteractionService interactionService;
 
     @Override
     @Transactional
@@ -67,7 +73,14 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                         .analysisId(analysisId)
                         .build();
 
-                connectionService.insert(connectionInsertDto);
+                ConnectionReadDto savedConnection = connectionService.insert(connectionInsertDto);
+
+                if (connBatchDto.getInteractions() != null && !connBatchDto.getInteractions().isEmpty()) {
+                    for (InteractionInsertDto interactionDto : connBatchDto.getInteractions()) {
+                        interactionDto.setConnectionId(savedConnection.getId());
+                        interactionService.insert(interactionDto);
+                    }
+                }
             }
         }
     }
