@@ -60,14 +60,14 @@ public class ControlStructureServiceImpl implements ControlStructureService {
     }
 
     private void saveConnections(List<ConnectionBatchInsertDto> connections, UUID analysisId, Map<String, UUID> componentMap) {
-        for (ConnectionBatchInsertDto connBatchDto : connections) {
-            UUID sourceId = componentMap.get(connBatchDto.getSourceCode());
-            UUID targetId = componentMap.get(connBatchDto.getTargetCode());
+        for (ConnectionBatchInsertDto connectionBatchInsertDto : connections) {
+            UUID sourceId = componentMap.get(connectionBatchInsertDto.getSourceCode());
+            UUID targetId = componentMap.get(connectionBatchInsertDto.getTargetCode());
 
             if (sourceId != null && targetId != null) {
                 ConnectionInsertDto connectionInsertDto = ConnectionInsertDto.builder()
-                        .code(connBatchDto.getCode())
-                        .style(connBatchDto.getStyle())
+                        .code(connectionBatchInsertDto.getCode())
+                        .style(connectionBatchInsertDto.getStyle())
                         .sourceId(sourceId)
                         .targetId(targetId)
                         .analysisId(analysisId)
@@ -75,13 +75,17 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
                 ConnectionReadDto savedConnection = connectionService.insert(connectionInsertDto);
 
-                if (connBatchDto.getInteractions() != null && !connBatchDto.getInteractions().isEmpty()) {
-                    for (InteractionInsertDto interactionDto : connBatchDto.getInteractions()) {
-                        interactionDto.setConnectionId(savedConnection.getId());
-                        interactionService.insert(interactionDto);
-                    }
+                if (connectionBatchInsertDto.getInteractions() != null && !connectionBatchInsertDto.getInteractions().isEmpty()) {
+                    saveInteractions(connectionBatchInsertDto, savedConnection);
                 }
             }
+        }
+    }
+
+    private void saveInteractions(ConnectionBatchInsertDto connectionBatchInsertDto, ConnectionReadDto savedConnection){
+        for (InteractionInsertDto interactionDto : connectionBatchInsertDto.getInteractions()) {
+            interactionDto.setConnectionId(savedConnection.getId());
+            interactionService.insert(interactionDto);
         }
     }
 }
