@@ -1,5 +1,6 @@
 package microstamp.step2.service.impl;
 
+import microstamp.step2.client.MicroStampAuthClient;
 import microstamp.step2.dto.component.ComponentReadDto;
 import microstamp.step2.dto.connection.ConnectionBatchInsertDto;
 import microstamp.step2.dto.connection.ConnectionInsertDto;
@@ -33,9 +34,14 @@ public class ControlStructureServiceImpl implements ControlStructureService {
     @Autowired
     private InteractionService interactionService;
 
+    @Autowired
+    private MicroStampAuthClient microStampAuthClient;
+
     @Override
     @Transactional
     public void createControlStructure(ControlStructureInsertDto dto) {
+
+        microStampAuthClient.getAnalysisById(dto.getAnalysisId());
         Map<String, UUID> componentCodeToIdMap = new HashMap<>();
 
         if (dto.getComponents() != null && !dto.getComponents().isEmpty()) {
