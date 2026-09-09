@@ -2,6 +2,8 @@ package microstamp.step2.service.impl;
 
 import microstamp.step2.client.MicroStampAuthClient;
 import microstamp.step2.dto.component.ComponentReadDto;
+import microstamp.step2.dto.component.ComponentUpdateDto;
+import microstamp.step2.dto.component.FacadeComponentInsertDto;
 import microstamp.step2.dto.connection.ConnectionBatchInsertDto;
 import microstamp.step2.dto.connection.ConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionReadDto;
@@ -17,10 +19,7 @@ import microstamp.step2.dto.controlstructure.ControlStructureInsertDto;
 import microstamp.step2.service.ComponentService;
 import microstamp.step2.service.ControlStructureService;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class ControlStructureServiceImpl implements ControlStructureService {
@@ -53,16 +52,49 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private Map<String, UUID> saveComponents(List<ComponentInsertDto> components, UUID analysisId) {
-        Map<String, UUID> map = new HashMap<>();
+    private Map<String, UUID> saveComponents(List<FacadeComponentInsertDto> components, UUID analysisId) {
+        Map<String, UUID> componentCodeToIdMap = new HashMap<>();
+        List<FacadeComponentInsertDto> componentInsertDtos = new ArrayList<>();
 
-        for (ComponentInsertDto componentDto : components) {
-            componentDto.setAnalysisId(analysisId);
-            ComponentReadDto savedComponent = componentService.insert(componentDto);
-            map.put(savedComponent.getCode(), savedComponent.getId());
+        for (FacadeComponentInsertDto facadeComponentDto : components) {
+            ComponentInsertDto insertDto = new ComponentInsertDto();
+            insertDto.setName(facadeComponentDto.getName());
+            insertDto.setCode(facadeComponentDto.getCode());
+            insertDto.setIsVisible(facadeComponentDto.getIsVisible());
+            insertDto.setType(facadeComponentDto.getType());
+            insertDto.setBorder(facadeComponentDto.getBorder());
+            insertDto.setAnalysisId(analysisId);
+            insertDto.setFatherId(null);
+
+            if(facadeComponentDto.getFatherCode() != null){
+                componentInsertDtos.add(facadeComponentDto);
+            }
+
+            ComponentReadDto savedComponent = componentService.insert(insertDto);
+            componentCodeToIdMap.put(savedComponent.getCode(), savedComponent.getId());
         }
 
-        return map;
+        for (FacadeComponentInsertDto facadeComponentDto : componentInsertDtos) {
+            if (facadeComponentDto.getFatherCode() != null && !facadeComponentDto.getFatherCode().isBlank()) {
+                UUID childId = componentCodeToIdMap.get(facadeComponentDto.getCode());
+                UUID fatherId = componentCodeToIdMap.get(facadeComponentDto.getFatherCode());
+
+                if (childId != null && fatherId != null) {
+                    ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
+                            .name(facadeComponentDto.getName())
+                            .code(facadeComponentDto.getCode())
+                            .isVisible(facadeComponentDto.getIsVisible())
+                            .type(facadeComponentDto.getType())
+                            .border(facadeComponentDto.getBorder())
+                            .fatherId(fatherId)
+                            .build();
+
+                    componentService.update(childId, updateDto);
+                }
+            }
+        }
+
+        return componentCodeToIdMap;
     }
 
     private void saveConnections(List<ConnectionBatchInsertDto> connections, UUID analysisId, Map<String, UUID> componentMap) {
