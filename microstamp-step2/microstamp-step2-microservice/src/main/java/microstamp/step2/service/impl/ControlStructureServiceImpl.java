@@ -54,7 +54,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
     private Map<String, UUID> saveComponents(List<FacadeComponentInsertDto> components, UUID analysisId) {
         Map<String, UUID> componentCodeToIdMap = new HashMap<>();
-        List<FacadeComponentInsertDto> componentInsertDtos = new ArrayList<>();
+        List<FacadeComponentInsertDto> componentsContainingFather = new ArrayList<>();
 
         for (FacadeComponentInsertDto facadeComponentDto : components) {
             ComponentInsertDto insertDto = new ComponentInsertDto();
@@ -67,14 +67,14 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             insertDto.setFatherId(null);
 
             if(facadeComponentDto.getFatherCode() != null){
-                componentInsertDtos.add(facadeComponentDto);
+                componentsContainingFather.add(facadeComponentDto);
             }
 
             ComponentReadDto savedComponent = componentService.insert(insertDto);
             componentCodeToIdMap.put(savedComponent.getCode(), savedComponent.getId());
         }
 
-        for (FacadeComponentInsertDto facadeComponentDto : componentInsertDtos) {
+        for (FacadeComponentInsertDto facadeComponentDto : componentsContainingFather) {
             if (facadeComponentDto.getFatherCode() != null && !facadeComponentDto.getFatherCode().isBlank()) {
                 UUID childId = componentCodeToIdMap.get(facadeComponentDto.getCode());
                 UUID fatherId = componentCodeToIdMap.get(facadeComponentDto.getFatherCode());
