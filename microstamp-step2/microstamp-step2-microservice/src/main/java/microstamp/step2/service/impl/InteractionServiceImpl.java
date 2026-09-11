@@ -10,6 +10,7 @@ import microstamp.step2.enumeration.InteractionType;
 import microstamp.step2.exception.Step2InvalidInteractionException;
 import microstamp.step2.exception.Step2NotFoundException;
 import microstamp.step2.mapper.InteractionMapper;
+import microstamp.step2.repository.ComponentRepository;
 import microstamp.step2.repository.ConnectionRepository;
 import microstamp.step2.repository.InteractionRepository;
 import microstamp.step2.service.InteractionService;
@@ -28,6 +29,8 @@ public class InteractionServiceImpl implements InteractionService {
 
     @Autowired
     private ConnectionRepository connectionRepository;
+    @Autowired
+    private ComponentRepository componentRepository;
 
     public List<InteractionReadDto> findAll() {
         return interactionRepository.findAll().stream()
@@ -43,6 +46,13 @@ public class InteractionServiceImpl implements InteractionService {
 
     public List<InteractionReadDto> findByConnectionId(UUID id) {
         return interactionRepository.findByConnectionId(id).stream()
+                .map(InteractionMapper::toDto)
+                .sorted(Comparator.comparing(InteractionReadDto::getCode))
+                .toList();
+    }
+
+    public List<InteractionReadDto> findByAnalysisId(UUID id) {
+        return interactionRepository.findByConnectionAnalysisId(id).stream()
                 .map(InteractionMapper::toDto)
                 .sorted(Comparator.comparing(InteractionReadDto::getCode))
                 .toList();

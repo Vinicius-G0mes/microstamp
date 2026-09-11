@@ -6,10 +6,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import microstamp.step2.dto.interaction.InteractionInsertDto;
+import microstamp.step2.dto.interaction.FacadeInteractionInsertDto;
 import microstamp.step2.enumeration.Style;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -17,6 +18,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConnectionBatchInsertDto {
+
+    private UUID id;
 
     @NotBlank
     private String code;
@@ -27,5 +30,5 @@ public class ConnectionBatchInsertDto {
 
     private Style style;
 
-    private List<InteractionInsertDto> interactions;
+    private List<FacadeInteractionInsertDto> interactions;
 }

@@ -20,4 +20,10 @@ public class ControlStructureController {
         controlStructureService.createControlStructure(dto);
     }
 
+    @PutMapping
+    @ResponseStatus(HttpStatus.OK)
+    public void update(@Valid @RequestBody ControlStructureInsertDto dto){
+        controlStructureService.updateControlStructure(dto);
+    }
+
 }

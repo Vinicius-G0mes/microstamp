@@ -9,6 +9,8 @@ import lombok.Setter;
 import microstamp.step2.enumeration.ComponentType;
 import microstamp.step2.enumeration.Style;
 
+import java.util.UUID;
+
 
 @Getter
 @Setter
@@ -16,6 +18,7 @@ import microstamp.step2.enumeration.Style;
 @AllArgsConstructor
 public class FacadeComponentInsertDto {
 
+    private UUID id;
 
     @NotBlank
     private String name;

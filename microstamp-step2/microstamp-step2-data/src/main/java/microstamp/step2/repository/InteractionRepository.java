@@ -15,4 +15,5 @@ public interface InteractionRepository extends JpaRepository<Interaction, UUID> 
 
     List<Interaction> findByInteractionType(InteractionType interactionType);
 
+    List<Interaction> findByConnectionAnalysisId(UUID analysisId);
 }
