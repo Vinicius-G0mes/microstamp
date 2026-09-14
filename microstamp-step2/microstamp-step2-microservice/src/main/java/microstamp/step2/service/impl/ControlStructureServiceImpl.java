@@ -146,8 +146,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         List<InteractionReadDto> dbInteractions = interactionService.findByAnalysisId(analysisId);
 
         for (InteractionReadDto dbInteraction : dbInteractions){
-            if (!incomingInteractionsIds.contains(dbInteraction.getId())){
-                interactionService.delete(dbInteraction.getId());
+            if (!incomingInteractionsIds.contains(dbInteraction.getId())) {
+                interactionService.deleteDirectlyById(dbInteraction.getId());
             }
         }
 

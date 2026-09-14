@@ -1,5 +1,6 @@
 package microstamp.step2.service.impl;
 
+import jakarta.transaction.Transactional;
 import microstamp.step2.dto.interaction.InteractionReadDto;
 import microstamp.step2.dto.interaction.InteractionUpdateDto;
 import microstamp.step2.entity.Connection;
@@ -52,7 +53,7 @@ public class InteractionServiceImpl implements InteractionService {
     }
 
     public List<InteractionReadDto> findByAnalysisId(UUID id) {
-        return interactionRepository.findByConnectionAnalysisId(id).stream()
+        return interactionRepository.findByConnection_AnalysisId(id).stream()
                 .map(InteractionMapper::toDto)
                 .sorted(Comparator.comparing(InteractionReadDto::getCode))
                 .toList();
@@ -87,6 +88,16 @@ public class InteractionServiceImpl implements InteractionService {
         Interaction interaction = interactionRepository.findById(id)
                 .orElseThrow(() -> new Step2NotFoundException("Interaction", id.toString()));
         interactionRepository.deleteById(interaction.getId());
+    }
+
+    @Override
+    @Transactional
+    public void deleteDirectlyById(UUID id) throws Step2NotFoundException {
+        if (!interactionRepository.existsById(id)) {
+            throw new Step2NotFoundException("Interaction", id.toString());
+        }
+
+        interactionRepository.deleteDirectlyById(id);
     }
 
     public void validate(Connection connection, InteractionType interactionType) {
