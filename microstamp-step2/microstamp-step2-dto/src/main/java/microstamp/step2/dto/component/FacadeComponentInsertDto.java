@@ -30,6 +30,8 @@ public class FacadeComponentInsertDto {
 
     private String fatherCode;
 
+    private UUID fatherId;
+
     private Style border;
 
     private ComponentType type;

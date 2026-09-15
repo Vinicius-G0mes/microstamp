@@ -65,7 +65,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             insertDto.setType(facadeComponentDto.getType());
             insertDto.setBorder(facadeComponentDto.getBorder());
             insertDto.setAnalysisId(analysisId);
-            insertDto.setFatherId(null);
+            insertDto.setFatherId(facadeComponentDto.getFatherId());
 
             if (facadeComponentDto.getFatherCode() != null) {
                 componentsContainingFather.add(facadeComponentDto);
@@ -76,7 +76,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
 
         for (FacadeComponentInsertDto facadeComponentDto : componentsContainingFather) {
-            if (facadeComponentDto.getFatherCode() != null && !facadeComponentDto.getFatherCode().isBlank()) {
+            if (!facadeComponentDto.getFatherCode().isBlank() && facadeComponentDto.getFatherId() == null) {
                 UUID childId = componentCodeToIdMap.get(facadeComponentDto.getCode());
                 UUID fatherId = componentCodeToIdMap.get(facadeComponentDto.getFatherCode());
 
@@ -132,86 +132,90 @@ public class ControlStructureServiceImpl implements ControlStructureService {
     @Transactional
     public void updateControlStructure(ControlStructureInsertDto dto) {
         microStampAuthClient.getAnalysisById(dto.getAnalysisId());
-
-        cleanUpRemovedElements(dto);
-    }
-
-    private void cleanUpRemovedElements(ControlStructureInsertDto dto) {
         UUID analysisId = dto.getAnalysisId();
 
-        Set<UUID> incomingComponentIds = storeIncomingComponentsIds(dto);
-        Set<UUID> incomingConnectionsIds = storeIncomingConnectionsIds(dto);
-        Set<UUID> incomingInteractionsIds = storeIncomingInteractionsIds(dto);
+        Map<String, UUID> componentCodeToIdMap = new HashMap<>();
+
+        List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
+
+        Set<UUID> incomingPersistedComponentsIds = storeIncomingComponents(dto, incomingNewComponents);
+        Set<UUID> incomingPersistedConnectionsIds = storeIncomingConnections(dto);
+        Set<UUID> incomingPersistedInteractionsIds = storeIncomingInteractionsIds(dto);
 
         List<InteractionReadDto> dbInteractions = interactionService.findByAnalysisId(analysisId);
 
-        for (InteractionReadDto dbInteraction : dbInteractions){
-            if (!incomingInteractionsIds.contains(dbInteraction.getId())) {
+        for (InteractionReadDto dbInteraction : dbInteractions) {
+            if (!incomingPersistedInteractionsIds.contains(dbInteraction.getId())) {
                 interactionService.deleteDirectlyById(dbInteraction.getId());
             }
         }
 
         List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
 
-        for (ConnectionReadDto dbConnection : dbConnections){
-            if (!incomingConnectionsIds.contains(dbConnection.getId())){
+        for (ConnectionReadDto dbConnection : dbConnections) {
+            if (!incomingPersistedConnectionsIds.contains(dbConnection.getId())) {
                 connectionService.delete(dbConnection.getId());
             }
         }
 
         List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
 
-        for (ComponentReadDto dbComponent : dbComponents){
-            if (!incomingComponentIds.contains(dbComponent.getId())){
+        for (ComponentReadDto dbComponent : dbComponents) {
+            if (!incomingPersistedComponentsIds.contains(dbComponent.getId())) {
                 componentService.delete(dbComponent.getId());
             }
         }
+
+        if (!incomingNewComponents.isEmpty()) {
+            componentCodeToIdMap = saveComponents(incomingNewComponents, analysisId);
+        }
     }
 
-    private HashSet<UUID> storeIncomingComponentsIds(ControlStructureInsertDto dto){
-        HashSet<UUID> incomingComponentsIds = new HashSet<>();
+    private HashSet<UUID> storeIncomingComponents(ControlStructureInsertDto dto, List<FacadeComponentInsertDto> incomingNewComponents) {
+        HashSet<UUID> incomingPersistedComponents = new HashSet<>();
 
         for (FacadeComponentInsertDto component : dto.getComponents()) {
 
             UUID id = component.getId();
-            //ignoring the added components in the "canvas" for now - will be changed
             if (id != null) {
-                incomingComponentsIds.add(id);
+                incomingPersistedComponents.add(id);
+            } else {
+                incomingNewComponents.add(component);
             }
         }
 
-        return incomingComponentsIds;
+        return incomingPersistedComponents;
     }
 
-    private HashSet<UUID> storeIncomingConnectionsIds(ControlStructureInsertDto dto) {
-        HashSet<UUID> incomingConnectionsIds = new HashSet<>();
+    private HashSet<UUID> storeIncomingConnections(ControlStructureInsertDto dto) {
+        HashSet<UUID> incomingPersistedConnectionsIds = new HashSet<>();
 
         for (ConnectionBatchInsertDto connection : dto.getConnections()) {
             UUID connectionId = connection.getId();
 
             if (connectionId != null) {
-                incomingConnectionsIds.add(connectionId);
+                incomingPersistedConnectionsIds.add(connectionId);
             }
         }
 
-        return incomingConnectionsIds;
+        return incomingPersistedConnectionsIds;
     }
 
-    private HashSet<UUID> storeIncomingInteractionsIds(ControlStructureInsertDto dto){
-        HashSet<UUID> incomingInteractionsIds = new HashSet<>();
+    private HashSet<UUID> storeIncomingInteractionsIds(ControlStructureInsertDto dto) {
+        HashSet<UUID> incomingPersistedInteractionsIds = new HashSet<>();
 
         for (ConnectionBatchInsertDto connection : dto.getConnections()) {
             if (connection.getInteractions() != null && !connection.getInteractions().isEmpty()) {
-                for (FacadeInteractionInsertDto interaction : connection.getInteractions()){
+                for (FacadeInteractionInsertDto interaction : connection.getInteractions()) {
                     UUID interactionId = interaction.getId();
 
                     if (interactionId != null) {
-                        incomingInteractionsIds.add(interactionId);
+                        incomingPersistedInteractionsIds.add(interactionId);
                     }
                 }
             }
         }
 
-        return incomingInteractionsIds;
+        return incomingPersistedInteractionsIds;
     }
 }
