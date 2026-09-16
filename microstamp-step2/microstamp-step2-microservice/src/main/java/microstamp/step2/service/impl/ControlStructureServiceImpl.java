@@ -134,46 +134,32 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         microStampAuthClient.getAnalysisById(dto.getAnalysisId());
         UUID analysisId = dto.getAnalysisId();
 
-        Map<String, UUID> componentCodeToIdMap = new HashMap<>();
-
         List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
+        Set<UUID> incomingPersistedComponentsIds = new HashSet<>();
+        storeIncomingComponents(dto, incomingPersistedComponentsIds, incomingNewComponents);
 
-        Set<UUID> incomingPersistedComponentsIds = storeIncomingComponents(dto, incomingNewComponents);
-        Set<UUID> incomingPersistedConnectionsIds = storeIncomingConnections(dto);
-        Set<UUID> incomingPersistedInteractionsIds = storeIncomingInteractionsIds(dto);
+        Set<UUID> incomingPersistedConnectionsIds = new HashSet<>();
+        storeIncomingConnections(dto, incomingPersistedConnectionsIds);
+
+        Set<UUID> incomingPersistedInteractionsIds = new HashSet<>();
+        storeIncomingInteractions(dto, incomingPersistedInteractionsIds);
 
         List<InteractionReadDto> dbInteractions = interactionService.findByAnalysisId(analysisId);
-
-        for (InteractionReadDto dbInteraction : dbInteractions) {
-            if (!incomingPersistedInteractionsIds.contains(dbInteraction.getId())) {
-                interactionService.deleteDirectlyById(dbInteraction.getId());
-            }
-        }
+        cleanUpRemovedInteractions(dbInteractions, incomingPersistedInteractionsIds);
 
         List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
-
-        for (ConnectionReadDto dbConnection : dbConnections) {
-            if (!incomingPersistedConnectionsIds.contains(dbConnection.getId())) {
-                connectionService.delete(dbConnection.getId());
-            }
-        }
+        cleanUpRemovedConnections(dbConnections, incomingPersistedConnectionsIds);
 
         List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
+        cleanUpRemovedComponents(dbComponents, incomingPersistedComponentsIds);
 
-        for (ComponentReadDto dbComponent : dbComponents) {
-            if (!incomingPersistedComponentsIds.contains(dbComponent.getId())) {
-                componentService.delete(dbComponent.getId());
-            }
-        }
-
+        Map<String, UUID> componentCodeToIdMap = new HashMap<>();
         if (!incomingNewComponents.isEmpty()) {
             componentCodeToIdMap = saveComponents(incomingNewComponents, analysisId);
         }
     }
 
-    private HashSet<UUID> storeIncomingComponents(ControlStructureInsertDto dto, List<FacadeComponentInsertDto> incomingNewComponents) {
-        HashSet<UUID> incomingPersistedComponents = new HashSet<>();
-
+    private void storeIncomingComponents(ControlStructureInsertDto dto, Set<UUID> incomingPersistedComponents, List<FacadeComponentInsertDto> incomingNewComponents) {
         for (FacadeComponentInsertDto component : dto.getComponents()) {
 
             UUID id = component.getId();
@@ -183,13 +169,9 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 incomingNewComponents.add(component);
             }
         }
-
-        return incomingPersistedComponents;
     }
 
-    private HashSet<UUID> storeIncomingConnections(ControlStructureInsertDto dto) {
-        HashSet<UUID> incomingPersistedConnectionsIds = new HashSet<>();
-
+    private void storeIncomingConnections(ControlStructureInsertDto dto, Set<UUID> incomingPersistedConnectionsIds) {
         for (ConnectionBatchInsertDto connection : dto.getConnections()) {
             UUID connectionId = connection.getId();
 
@@ -197,13 +179,9 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 incomingPersistedConnectionsIds.add(connectionId);
             }
         }
-
-        return incomingPersistedConnectionsIds;
     }
 
-    private HashSet<UUID> storeIncomingInteractionsIds(ControlStructureInsertDto dto) {
-        HashSet<UUID> incomingPersistedInteractionsIds = new HashSet<>();
-
+    private void storeIncomingInteractions(ControlStructureInsertDto dto, Set<UUID> incomingPersistedInteractionsIds) {
         for (ConnectionBatchInsertDto connection : dto.getConnections()) {
             if (connection.getInteractions() != null && !connection.getInteractions().isEmpty()) {
                 for (FacadeInteractionInsertDto interaction : connection.getInteractions()) {
@@ -215,7 +193,29 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 }
             }
         }
+    }
 
-        return incomingPersistedInteractionsIds;
+    private void cleanUpRemovedInteractions(List<InteractionReadDto> dbInteractions, Set<UUID> incomingPersistedInteractionsIds){
+        for (InteractionReadDto dbInteraction : dbInteractions) {
+            if (!incomingPersistedInteractionsIds.contains(dbInteraction.getId())) {
+                interactionService.deleteDirectlyById(dbInteraction.getId());
+            }
+        }
+    }
+
+    private void cleanUpRemovedConnections(List<ConnectionReadDto> dbConnections, Set<UUID> incomingPersistedConnectionsIds){
+        for (ConnectionReadDto dbConnection : dbConnections) {
+            if (!incomingPersistedConnectionsIds.contains(dbConnection.getId())) {
+                connectionService.delete(dbConnection.getId());
+            }
+        }
+    }
+
+    private void cleanUpRemovedComponents(List<ComponentReadDto> dbComponents, Set<UUID> incomingPersistedComponentsIds){
+        for (ComponentReadDto dbComponent : dbComponents) {
+            if (!incomingPersistedComponentsIds.contains(dbComponent.getId())) {
+                componentService.delete(dbComponent.getId());
+            }
+        }
     }
 }
