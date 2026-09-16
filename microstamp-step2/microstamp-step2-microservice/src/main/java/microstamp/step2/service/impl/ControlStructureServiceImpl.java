@@ -135,8 +135,9 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         UUID analysisId = dto.getAnalysisId();
 
         List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
+        List<FacadeComponentInsertDto> incomingExistingComponents = new LinkedList<>();
         Set<UUID> incomingPersistedComponentsIds = new HashSet<>();
-        storeIncomingComponents(dto, incomingPersistedComponentsIds, incomingNewComponents);
+        storeIncomingComponents(dto, incomingPersistedComponentsIds, incomingNewComponents, incomingExistingComponents);
 
         Set<UUID> incomingPersistedConnectionsIds = new HashSet<>();
         storeIncomingConnections(dto, incomingPersistedConnectionsIds);
@@ -157,17 +158,55 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         if (!incomingNewComponents.isEmpty()) {
             componentCodeToIdMap = saveComponents(incomingNewComponents, analysisId);
         }
+
+        for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
+            componentCodeToIdMap.put(existingDto.getCode(), existingDto.getId());
+        }
+
+        updateExistingComponents(incomingExistingComponents, componentCodeToIdMap);
     }
 
-    private void storeIncomingComponents(ControlStructureInsertDto dto, Set<UUID> incomingPersistedComponents, List<FacadeComponentInsertDto> incomingNewComponents) {
-        for (FacadeComponentInsertDto component : dto.getComponents()) {
+    private void storeIncomingComponents(
+            ControlStructureInsertDto dto,
+            Set<UUID> incomingPersistedComponents,
+            List<FacadeComponentInsertDto> incomingNewComponents,
+            List<FacadeComponentInsertDto> incomingExistingComponents) {
 
-            UUID id = component.getId();
-            if (id != null) {
-                incomingPersistedComponents.add(id);
-            } else {
-                incomingNewComponents.add(component);
+        if (dto.getComponents() != null) {
+            for (FacadeComponentInsertDto component : dto.getComponents()) {
+                UUID id = component.getId();
+                if (id != null) {
+                    incomingPersistedComponents.add(id);
+                    incomingExistingComponents.add(component);
+                } else {
+                    incomingNewComponents.add(component);
+                }
             }
+        }
+    }
+
+    private void updateExistingComponents(
+            List<FacadeComponentInsertDto> incomingExistingComponents,
+            Map<String, UUID> componentCodeToIdMap) {
+
+        for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
+            UUID fatherId = existingDto.getFatherId();
+
+            // Se fatherId não veio preenchido, tenta resolver pelo fatherCode no mapa unificado
+            if (fatherId == null && existingDto.getFatherCode() != null && !existingDto.getFatherCode().isBlank()) {
+                fatherId = componentCodeToIdMap.get(existingDto.getFatherCode());
+            }
+
+            ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
+                    .name(existingDto.getName())
+                    .code(existingDto.getCode())
+                    .isVisible(existingDto.getIsVisible())
+                    .type(existingDto.getType())
+                    .border(existingDto.getBorder())
+                    .fatherId(fatherId)
+                    .build();
+
+            componentService.update(existingDto.getId(), updateDto);
         }
     }
 
