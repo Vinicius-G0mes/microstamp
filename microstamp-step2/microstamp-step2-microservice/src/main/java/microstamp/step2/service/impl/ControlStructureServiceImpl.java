@@ -136,8 +136,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
         List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
         List<FacadeComponentInsertDto> incomingExistingComponents = new LinkedList<>();
-        Set<UUID> incomingPersistedComponentsIds = new HashSet<>();
-        storeIncomingComponents(dto, incomingPersistedComponentsIds, incomingNewComponents, incomingExistingComponents);
+        Set<UUID> incomingExistingComponentsIds = new HashSet<>();
+        storeIncomingComponents(dto, incomingExistingComponentsIds, incomingNewComponents, incomingExistingComponents);
 
         Set<UUID> incomingPersistedConnectionsIds = new HashSet<>();
         storeIncomingConnections(dto, incomingPersistedConnectionsIds);
@@ -152,7 +152,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         cleanUpRemovedConnections(dbConnections, incomingPersistedConnectionsIds);
 
         List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
-        cleanUpRemovedComponents(dbComponents, incomingPersistedComponentsIds);
+        cleanUpRemovedComponents(dbComponents, incomingExistingComponentsIds);
 
         Map<String, UUID> componentCodeToIdMap = new HashMap<>();
         if (!incomingNewComponents.isEmpty()) {
@@ -168,7 +168,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
     private void storeIncomingComponents(
             ControlStructureInsertDto dto,
-            Set<UUID> incomingPersistedComponents,
+            Set<UUID> ExistingComponentsIds,
             List<FacadeComponentInsertDto> incomingNewComponents,
             List<FacadeComponentInsertDto> incomingExistingComponents) {
 
@@ -176,7 +176,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             for (FacadeComponentInsertDto component : dto.getComponents()) {
                 UUID id = component.getId();
                 if (id != null) {
-                    incomingPersistedComponents.add(id);
+                    ExistingComponentsIds.add(id);
                     incomingExistingComponents.add(component);
                 } else {
                     incomingNewComponents.add(component);
@@ -249,9 +249,9 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void cleanUpRemovedComponents(List<ComponentReadDto> dbComponents, Set<UUID> incomingPersistedComponentsIds){
+    private void cleanUpRemovedComponents(List<ComponentReadDto> dbComponents, Set<UUID> incomingExistingComponentsIds){
         for (ComponentReadDto dbComponent : dbComponents) {
-            if (!incomingPersistedComponentsIds.contains(dbComponent.getId())) {
+            if (!incomingExistingComponentsIds.contains(dbComponent.getId())) {
                 componentService.delete(dbComponent.getId());
             }
         }
