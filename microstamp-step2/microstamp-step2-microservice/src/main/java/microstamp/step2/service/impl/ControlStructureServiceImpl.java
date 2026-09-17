@@ -4,11 +4,13 @@ import microstamp.step2.client.MicroStampAuthClient;
 import microstamp.step2.dto.component.ComponentReadDto;
 import microstamp.step2.dto.component.ComponentUpdateDto;
 import microstamp.step2.dto.component.FacadeComponentInsertDto;
+import microstamp.step2.dto.connection.ConnectionUpdateDto;
 import microstamp.step2.dto.connection.FacadeConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionReadDto;
 import microstamp.step2.dto.interaction.FacadeInteractionInsertDto;
 import microstamp.step2.dto.interaction.InteractionReadDto;
+import microstamp.step2.exception.Step2NotFoundException;
 import microstamp.step2.service.ConnectionService;
 import microstamp.step2.service.InteractionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,8 +141,10 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         Set<UUID> incomingExistingComponentsIds = new HashSet<>();
         storeIncomingComponents(dto, incomingExistingComponentsIds, incomingNewComponents, incomingExistingComponents);
 
-        Set<UUID> incomingPersistedConnectionsIds = new HashSet<>();
-        storeIncomingConnections(dto, incomingPersistedConnectionsIds);
+        List<FacadeConnectionInsertDto> incomingNewConnections = new LinkedList<>();
+        List<FacadeConnectionInsertDto> incomingExistingConnections = new LinkedList<>();
+        Set<UUID> incomingExistingConnectionsIds = new HashSet<>();
+        storeIncomingConnections(dto, incomingExistingConnectionsIds, incomingNewConnections, incomingExistingConnections);
 
         Set<UUID> incomingPersistedInteractionsIds = new HashSet<>();
         storeIncomingInteractions(dto, incomingPersistedInteractionsIds);
@@ -149,7 +153,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         cleanUpRemovedInteractions(dbInteractions, incomingPersistedInteractionsIds);
 
         List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
-        cleanUpRemovedConnections(dbConnections, incomingPersistedConnectionsIds);
+        cleanUpRemovedConnections(dbConnections, incomingExistingConnectionsIds);
 
         List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
         cleanUpRemovedComponents(dbComponents, incomingExistingComponentsIds);
@@ -164,6 +168,9 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
 
         updateExistingComponents(incomingExistingComponents, componentCodeToIdMap);
+
+        saveConnections(incomingNewConnections, analysisId, componentCodeToIdMap);
+        updateExistingConnections(incomingExistingConnections, componentCodeToIdMap);
     }
 
     private void storeIncomingComponents(
@@ -209,12 +216,44 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void storeIncomingConnections(ControlStructureInsertDto dto, Set<UUID> incomingPersistedConnectionsIds) {
+    private void storeIncomingConnections(
+            ControlStructureInsertDto dto,
+            Set<UUID> incomingExistingConnectionsIds,
+            List<FacadeConnectionInsertDto> incomingNewConnections,
+            List<FacadeConnectionInsertDto> incomingExistingConnections) {
+        
         for (FacadeConnectionInsertDto connection : dto.getConnections()) {
             UUID connectionId = connection.getId();
 
             if (connectionId != null) {
-                incomingPersistedConnectionsIds.add(connectionId);
+                incomingExistingConnectionsIds.add(connectionId);
+                incomingExistingConnections.add(connection);
+            } else {
+                incomingNewConnections.add(connection);
+            }
+        }
+    }
+
+    private void updateExistingConnections(
+            List<FacadeConnectionInsertDto> incomingExistingConnections,
+            Map<String, UUID> componentCodeToIdMap) {
+
+        for (FacadeConnectionInsertDto existingDto : incomingExistingConnections) {
+            UUID id = existingDto.getId();
+            UUID sourceId = componentCodeToIdMap.get(existingDto.getSourceCode());
+            UUID targetId = componentCodeToIdMap.get(existingDto.getTargetCode());
+
+            if (sourceId != null && targetId != null) {
+                ConnectionUpdateDto updateDto = ConnectionUpdateDto.builder()
+                        .code(existingDto.getCode())
+                        .sourceId(sourceId)
+                        .targetId(targetId)
+                        .style(existingDto.getStyle())
+                        .build();
+
+                connectionService.update(id, updateDto);
+            } else {
+                throw new Step2NotFoundException("Component Source/Target not found for connection", existingDto.getCode());
             }
         }
     }
@@ -241,9 +280,9 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void cleanUpRemovedConnections(List<ConnectionReadDto> dbConnections, Set<UUID> incomingPersistedConnectionsIds){
+    private void cleanUpRemovedConnections(List<ConnectionReadDto> dbConnections, Set<UUID> incomingExistingConnectionsIds){
         for (ConnectionReadDto dbConnection : dbConnections) {
-            if (!incomingPersistedConnectionsIds.contains(dbConnection.getId())) {
+            if (!incomingExistingConnectionsIds.contains(dbConnection.getId())) {
                 connectionService.delete(dbConnection.getId());
             }
         }
