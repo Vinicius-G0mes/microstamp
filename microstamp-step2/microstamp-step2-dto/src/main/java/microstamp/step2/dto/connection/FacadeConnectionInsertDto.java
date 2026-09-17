@@ -17,7 +17,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConnectionBatchInsertDto {
+public class FacadeConnectionInsertDto {
 
     private UUID id;
 

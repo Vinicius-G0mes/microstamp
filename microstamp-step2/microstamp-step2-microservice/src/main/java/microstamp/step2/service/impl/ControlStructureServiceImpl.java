@@ -4,7 +4,7 @@ import microstamp.step2.client.MicroStampAuthClient;
 import microstamp.step2.dto.component.ComponentReadDto;
 import microstamp.step2.dto.component.ComponentUpdateDto;
 import microstamp.step2.dto.component.FacadeComponentInsertDto;
-import microstamp.step2.dto.connection.ConnectionBatchInsertDto;
+import microstamp.step2.dto.connection.FacadeConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionReadDto;
 import microstamp.step2.dto.interaction.FacadeInteractionInsertDto;
@@ -98,15 +98,15 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         return componentCodeToIdMap;
     }
 
-    private void saveConnections(List<ConnectionBatchInsertDto> connections, UUID analysisId, Map<String, UUID> componentMap) {
-        for (ConnectionBatchInsertDto connectionBatchInsertDto : connections) {
-            UUID sourceId = componentMap.get(connectionBatchInsertDto.getSourceCode());
-            UUID targetId = componentMap.get(connectionBatchInsertDto.getTargetCode());
+    private void saveConnections(List<FacadeConnectionInsertDto> connections, UUID analysisId, Map<String, UUID> componentMap) {
+        for (FacadeConnectionInsertDto facadeConnectionInsertDto : connections) {
+            UUID sourceId = componentMap.get(facadeConnectionInsertDto.getSourceCode());
+            UUID targetId = componentMap.get(facadeConnectionInsertDto.getTargetCode());
 
             if (sourceId != null && targetId != null) {
                 ConnectionInsertDto connectionInsertDto = ConnectionInsertDto.builder()
-                        .code(connectionBatchInsertDto.getCode())
-                        .style(connectionBatchInsertDto.getStyle())
+                        .code(facadeConnectionInsertDto.getCode())
+                        .style(facadeConnectionInsertDto.getStyle())
                         .sourceId(sourceId)
                         .targetId(targetId)
                         .analysisId(analysisId)
@@ -114,15 +114,15 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
                 ConnectionReadDto savedConnection = connectionService.insert(connectionInsertDto);
 
-                if (connectionBatchInsertDto.getInteractions() != null && !connectionBatchInsertDto.getInteractions().isEmpty()) {
-                    saveInteractions(connectionBatchInsertDto, savedConnection);
+                if (facadeConnectionInsertDto.getInteractions() != null && !facadeConnectionInsertDto.getInteractions().isEmpty()) {
+                    saveInteractions(facadeConnectionInsertDto, savedConnection);
                 }
             }
         }
     }
 
-    private void saveInteractions(ConnectionBatchInsertDto connectionBatchInsertDto, ConnectionReadDto savedConnection) {
-        for (FacadeInteractionInsertDto interactionDto : connectionBatchInsertDto.getInteractions()) {
+    private void saveInteractions(FacadeConnectionInsertDto facadeConnectionInsertDto, ConnectionReadDto savedConnection) {
+        for (FacadeInteractionInsertDto interactionDto : facadeConnectionInsertDto.getInteractions()) {
             interactionDto.setConnectionId(savedConnection.getId());
             interactionService.insert(interactionDto);
         }
@@ -192,7 +192,6 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
             UUID fatherId = existingDto.getFatherId();
 
-            // Se fatherId não veio preenchido, tenta resolver pelo fatherCode no mapa unificado
             if (fatherId == null && existingDto.getFatherCode() != null && !existingDto.getFatherCode().isBlank()) {
                 fatherId = componentCodeToIdMap.get(existingDto.getFatherCode());
             }
@@ -211,7 +210,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
     }
 
     private void storeIncomingConnections(ControlStructureInsertDto dto, Set<UUID> incomingPersistedConnectionsIds) {
-        for (ConnectionBatchInsertDto connection : dto.getConnections()) {
+        for (FacadeConnectionInsertDto connection : dto.getConnections()) {
             UUID connectionId = connection.getId();
 
             if (connectionId != null) {
@@ -221,7 +220,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
     }
 
     private void storeIncomingInteractions(ControlStructureInsertDto dto, Set<UUID> incomingPersistedInteractionsIds) {
-        for (ConnectionBatchInsertDto connection : dto.getConnections()) {
+        for (FacadeConnectionInsertDto connection : dto.getConnections()) {
             if (connection.getInteractions() != null && !connection.getInteractions().isEmpty()) {
                 for (FacadeInteractionInsertDto interaction : connection.getInteractions()) {
                     UUID interactionId = interaction.getId();
