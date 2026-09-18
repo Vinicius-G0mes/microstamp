@@ -9,7 +9,9 @@ import microstamp.step2.dto.connection.FacadeConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionReadDto;
 import microstamp.step2.dto.interaction.FacadeInteractionInsertDto;
+import microstamp.step2.dto.interaction.InteractionInsertDto;
 import microstamp.step2.dto.interaction.InteractionReadDto;
+import microstamp.step2.dto.interaction.InteractionUpdateDto;
 import microstamp.step2.exception.Step2NotFoundException;
 import microstamp.step2.service.ConnectionService;
 import microstamp.step2.service.InteractionService;
@@ -124,9 +126,19 @@ public class ControlStructureServiceImpl implements ControlStructureService {
     }
 
     private void saveInteractions(FacadeConnectionInsertDto facadeConnectionInsertDto, ConnectionReadDto savedConnection) {
-        for (FacadeInteractionInsertDto interactionDto : facadeConnectionInsertDto.getInteractions()) {
-            interactionDto.setConnectionId(savedConnection.getId());
-            interactionService.insert(interactionDto);
+        for (FacadeInteractionInsertDto facadeInteractionInsertDto : facadeConnectionInsertDto.getInteractions()) {
+            if(facadeInteractionInsertDto.getId() == null) {
+                facadeInteractionInsertDto.setConnectionId(savedConnection.getId());
+                interactionService.insert(facadeInteractionInsertDto);
+            } else {
+                InteractionUpdateDto interactionUpdateDto = InteractionUpdateDto.builder()
+                        .code(facadeInteractionInsertDto.getCode())
+                        .name(facadeInteractionInsertDto.getName())
+                        .interactionType(facadeInteractionInsertDto.getInteractionType())
+                        .build();
+
+                interactionService.update(facadeInteractionInsertDto.getId(), interactionUpdateDto);
+            }
         }
     }
 
@@ -146,11 +158,11 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         Set<UUID> incomingExistingConnectionsIds = new HashSet<>();
         storeIncomingConnections(dto, incomingExistingConnectionsIds, incomingNewConnections, incomingExistingConnections);
 
-        Set<UUID> incomingPersistedInteractionsIds = new HashSet<>();
-        storeIncomingInteractions(dto, incomingPersistedInteractionsIds);
+        Set<UUID> incomingExistingInteractionsIds = new HashSet<>();
+        storeIncomingInteractions(dto, incomingExistingInteractionsIds);
 
         List<InteractionReadDto> dbInteractions = interactionService.findByAnalysisId(analysisId);
-        cleanUpRemovedInteractions(dbInteractions, incomingPersistedInteractionsIds);
+        cleanUpRemovedInteractions(dbInteractions, incomingExistingInteractionsIds);
 
         List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
         cleanUpRemovedConnections(dbConnections, incomingExistingConnectionsIds);
@@ -239,7 +251,6 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             Map<String, UUID> componentCodeToIdMap) {
 
         for (FacadeConnectionInsertDto existingDto : incomingExistingConnections) {
-            UUID id = existingDto.getId();
             UUID sourceId = componentCodeToIdMap.get(existingDto.getSourceCode());
             UUID targetId = componentCodeToIdMap.get(existingDto.getTargetCode());
 
@@ -251,30 +262,35 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                         .style(existingDto.getStyle())
                         .build();
 
-                connectionService.update(id, updateDto);
+                connectionService.update(existingDto.getId(), updateDto);
             } else {
                 throw new Step2NotFoundException("Component Source/Target not found for connection", existingDto.getCode());
+            }
+
+            List<FacadeInteractionInsertDto> interactions = existingDto.getInteractions();
+            if (interactions != null && !interactions.isEmpty()){
+                    saveInteractions(existingDto, connectionService.findById(existingDto.getId()));
             }
         }
     }
 
-    private void storeIncomingInteractions(ControlStructureInsertDto dto, Set<UUID> incomingPersistedInteractionsIds) {
+    private void storeIncomingInteractions(ControlStructureInsertDto dto, Set<UUID> incomingExistingInteractionsIds) {
         for (FacadeConnectionInsertDto connection : dto.getConnections()) {
             if (connection.getInteractions() != null && !connection.getInteractions().isEmpty()) {
                 for (FacadeInteractionInsertDto interaction : connection.getInteractions()) {
                     UUID interactionId = interaction.getId();
 
                     if (interactionId != null) {
-                        incomingPersistedInteractionsIds.add(interactionId);
+                        incomingExistingInteractionsIds.add(interactionId);
                     }
                 }
             }
         }
     }
 
-    private void cleanUpRemovedInteractions(List<InteractionReadDto> dbInteractions, Set<UUID> incomingPersistedInteractionsIds){
+    private void cleanUpRemovedInteractions(List<InteractionReadDto> dbInteractions, Set<UUID> incomingExistingInteractionsIds){
         for (InteractionReadDto dbInteraction : dbInteractions) {
-            if (!incomingPersistedInteractionsIds.contains(dbInteraction.getId())) {
+            if (!incomingExistingInteractionsIds.contains(dbInteraction.getId())) {
                 interactionService.deleteDirectlyById(dbInteraction.getId());
             }
         }
