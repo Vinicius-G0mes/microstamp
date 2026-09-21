@@ -148,6 +148,10 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         microStampAuthClient.getAnalysisById(dto.getAnalysisId());
         UUID analysisId = dto.getAnalysisId();
 
+        List<InteractionReadDto> dbInteractions = interactionService.findByAnalysisId(analysisId);
+        List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
+        List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
+
         List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
         List<FacadeComponentInsertDto> incomingExistingComponents = new LinkedList<>();
         Set<UUID> incomingExistingComponentsIds = new HashSet<>();
@@ -160,15 +164,6 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
         Set<UUID> incomingExistingInteractionsIds = new HashSet<>();
         storeIncomingInteractions(dto, incomingExistingInteractionsIds);
-
-        List<InteractionReadDto> dbInteractions = interactionService.findByAnalysisId(analysisId);
-        cleanUpRemovedInteractions(dbInteractions, incomingExistingInteractionsIds);
-
-        List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
-        cleanUpRemovedConnections(dbConnections, incomingExistingConnectionsIds);
-
-        List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
-        cleanUpRemovedComponents(dbComponents, incomingExistingComponentsIds);
 
         Map<String, UUID> componentCodeToIdMap = new HashMap<>();
         if (!incomingNewComponents.isEmpty()) {
@@ -183,6 +178,10 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
         saveConnections(incomingNewConnections, analysisId, componentCodeToIdMap);
         updateExistingConnections(incomingExistingConnections, componentCodeToIdMap);
+
+        cleanUpRemovedInteractions(dbInteractions, incomingExistingInteractionsIds);
+        cleanUpRemovedConnections(dbConnections, incomingExistingConnectionsIds);
+        cleanUpRemovedComponents(dbComponents, incomingExistingComponentsIds);
     }
 
     private void storeIncomingComponents(
