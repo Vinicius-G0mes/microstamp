@@ -14,16 +14,10 @@ public class ControlStructureController {
 
     private final ControlStructureService controlStructureService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public void create(@Valid @RequestBody ControlStructureInsertDto dto){
-        controlStructureService.createControlStructure(dto);
-    }
-
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public void update(@Valid @RequestBody ControlStructureInsertDto dto){
-        controlStructureService.updateControlStructure(dto);
+        controlStructureService.saveControlStructure(dto);
     }
 
 }

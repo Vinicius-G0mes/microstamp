@@ -9,7 +9,6 @@ import microstamp.step2.dto.connection.FacadeConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionInsertDto;
 import microstamp.step2.dto.connection.ConnectionReadDto;
 import microstamp.step2.dto.interaction.FacadeInteractionInsertDto;
-import microstamp.step2.dto.interaction.InteractionInsertDto;
 import microstamp.step2.dto.interaction.InteractionReadDto;
 import microstamp.step2.dto.interaction.InteractionUpdateDto;
 import microstamp.step2.exception.Step2NotFoundException;
@@ -43,18 +42,43 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
     @Override
     @Transactional
-    public void createControlStructure(ControlStructureInsertDto dto) {
-
+    public void saveControlStructure(ControlStructureInsertDto dto) {
         microStampAuthClient.getAnalysisById(dto.getAnalysisId());
+        UUID analysisId = dto.getAnalysisId();
+
+        List<InteractionReadDto> dbInteractions = interactionService.findByAnalysisId(analysisId);
+        List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
+        List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
+
+        List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
+        List<FacadeComponentInsertDto> incomingExistingComponents = new LinkedList<>();
+        Set<UUID> incomingExistingComponentsIds = new HashSet<>();
+        storeIncomingComponents(dto, incomingExistingComponentsIds, incomingNewComponents, incomingExistingComponents);
+
+        List<FacadeConnectionInsertDto> incomingNewConnections = new LinkedList<>();
+        List<FacadeConnectionInsertDto> incomingExistingConnections = new LinkedList<>();
+        Set<UUID> incomingExistingConnectionsIds = new HashSet<>();
+        storeIncomingConnections(dto, incomingExistingConnectionsIds, incomingNewConnections, incomingExistingConnections);
+
+        Set<UUID> incomingExistingInteractionsIds = new HashSet<>();
+        storeIncomingInteractions(dto, incomingExistingInteractionsIds);
+
         Map<String, UUID> componentCodeToIdMap = new HashMap<>();
-
-        if (dto.getComponents() != null && !dto.getComponents().isEmpty()) {
-            saveComponents(dto.getComponents(), dto.getAnalysisId(), componentCodeToIdMap);
+        for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
+            componentCodeToIdMap.put(existingDto.getCode(), existingDto.getId());
+        }
+        if (!incomingNewComponents.isEmpty()) {
+            saveComponents(incomingNewComponents, analysisId, componentCodeToIdMap);
         }
 
-        if (dto.getConnections() != null && !dto.getConnections().isEmpty()) {
-            saveConnections(dto.getConnections(), dto.getAnalysisId(), componentCodeToIdMap);
-        }
+        updateExistingComponents(incomingExistingComponents, componentCodeToIdMap);
+
+        saveConnections(incomingNewConnections, analysisId, componentCodeToIdMap);
+        updateExistingConnections(incomingExistingConnections, componentCodeToIdMap);
+
+        cleanUpRemovedInteractions(dbInteractions, incomingExistingInteractionsIds);
+        cleanUpRemovedConnections(dbConnections, incomingExistingConnectionsIds);
+        cleanUpRemovedComponents(dbComponents, incomingExistingComponentsIds);
     }
 
     private void saveComponents(List<FacadeComponentInsertDto> components, UUID analysisId, Map<String, UUID> componentCodeToIdMap) {
@@ -135,47 +159,6 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 interactionService.update(facadeInteractionInsertDto.getId(), interactionUpdateDto);
             }
         }
-    }
-
-    @Override
-    @Transactional
-    public void updateControlStructure(ControlStructureInsertDto dto) {
-        microStampAuthClient.getAnalysisById(dto.getAnalysisId());
-        UUID analysisId = dto.getAnalysisId();
-
-        List<InteractionReadDto> dbInteractions = interactionService.findByAnalysisId(analysisId);
-        List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
-        List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
-
-        List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
-        List<FacadeComponentInsertDto> incomingExistingComponents = new LinkedList<>();
-        Set<UUID> incomingExistingComponentsIds = new HashSet<>();
-        storeIncomingComponents(dto, incomingExistingComponentsIds, incomingNewComponents, incomingExistingComponents);
-
-        List<FacadeConnectionInsertDto> incomingNewConnections = new LinkedList<>();
-        List<FacadeConnectionInsertDto> incomingExistingConnections = new LinkedList<>();
-        Set<UUID> incomingExistingConnectionsIds = new HashSet<>();
-        storeIncomingConnections(dto, incomingExistingConnectionsIds, incomingNewConnections, incomingExistingConnections);
-
-        Set<UUID> incomingExistingInteractionsIds = new HashSet<>();
-        storeIncomingInteractions(dto, incomingExistingInteractionsIds);
-
-        Map<String, UUID> componentCodeToIdMap = new HashMap<>();
-        for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
-            componentCodeToIdMap.put(existingDto.getCode(), existingDto.getId());
-        }
-        if (!incomingNewComponents.isEmpty()) {
-            saveComponents(incomingNewComponents, analysisId, componentCodeToIdMap);
-        }
-
-        updateExistingComponents(incomingExistingComponents, componentCodeToIdMap);
-
-        saveConnections(incomingNewConnections, analysisId, componentCodeToIdMap);
-        updateExistingConnections(incomingExistingConnections, componentCodeToIdMap);
-
-        cleanUpRemovedInteractions(dbInteractions, incomingExistingInteractionsIds);
-        cleanUpRemovedConnections(dbConnections, incomingExistingConnectionsIds);
-        cleanUpRemovedComponents(dbComponents, incomingExistingComponentsIds);
     }
 
     private void storeIncomingComponents(
