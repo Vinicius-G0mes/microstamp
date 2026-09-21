@@ -81,7 +81,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         cleanUpRemovedComponents(dbComponents, incomingExistingComponentsIds);
     }
 
-    private void saveComponents(List<FacadeComponentInsertDto> components, UUID analysisId, Map<String, UUID> componentCodeToIdMap) {
+    private void saveComponents(List<FacadeComponentInsertDto> components,
+                                UUID analysisId, Map<String, UUID> componentCodeToIdMap) {
         List<FacadeComponentInsertDto> componentsContainingFather = new ArrayList<>();
 
         for (FacadeComponentInsertDto facadeComponentDto : components) {
@@ -121,7 +122,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void saveConnections(List<FacadeConnectionInsertDto> connections, UUID analysisId, Map<String, UUID> componentMap) {
+    private void saveConnections(List<FacadeConnectionInsertDto> connections,
+                                 UUID analysisId, Map<String, UUID> componentMap) {
         for (FacadeConnectionInsertDto facadeConnectionInsertDto : connections) {
             UUID sourceId = componentMap.get(facadeConnectionInsertDto.getSourceCode());
             UUID targetId = componentMap.get(facadeConnectionInsertDto.getTargetCode());
@@ -144,7 +146,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void saveInteractions(FacadeConnectionInsertDto facadeConnectionInsertDto, ConnectionReadDto savedConnection) {
+    private void saveInteractions(FacadeConnectionInsertDto facadeConnectionInsertDto,
+                                  ConnectionReadDto savedConnection) {
         for (FacadeInteractionInsertDto facadeInteractionInsertDto : facadeConnectionInsertDto.getInteractions()) {
             if (facadeInteractionInsertDto.getId() == null) {
                 facadeInteractionInsertDto.setConnectionId(savedConnection.getId());
@@ -180,6 +183,39 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
+    private void storeIncomingConnections(
+            ControlStructureInsertDto dto,
+            Set<UUID> incomingExistingConnectionsIds,
+            List<FacadeConnectionInsertDto> incomingNewConnections,
+            List<FacadeConnectionInsertDto> incomingExistingConnections) {
+
+        for (FacadeConnectionInsertDto connection : dto.getConnections()) {
+            UUID connectionId = connection.getId();
+
+            if (connectionId != null) {
+                incomingExistingConnectionsIds.add(connectionId);
+                incomingExistingConnections.add(connection);
+            } else {
+                incomingNewConnections.add(connection);
+            }
+        }
+    }
+
+    private void storeIncomingInteractions(ControlStructureInsertDto dto,
+                                           Set<UUID> incomingExistingInteractionsIds) {
+        for (FacadeConnectionInsertDto connection : dto.getConnections()) {
+            if (connection.getInteractions() != null && !connection.getInteractions().isEmpty()) {
+                for (FacadeInteractionInsertDto interaction : connection.getInteractions()) {
+                    UUID interactionId = interaction.getId();
+
+                    if (interactionId != null) {
+                        incomingExistingInteractionsIds.add(interactionId);
+                    }
+                }
+            }
+        }
+    }
+
     private void updateExistingComponents(
             List<FacadeComponentInsertDto> incomingExistingComponents,
             Map<String, UUID> componentCodeToIdMap) {
@@ -199,24 +235,6 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                         .build();
 
                 componentService.update(existingDto.getId(), updateDto);
-            }
-        }
-    }
-
-    private void storeIncomingConnections(
-            ControlStructureInsertDto dto,
-            Set<UUID> incomingExistingConnectionsIds,
-            List<FacadeConnectionInsertDto> incomingNewConnections,
-            List<FacadeConnectionInsertDto> incomingExistingConnections) {
-
-        for (FacadeConnectionInsertDto connection : dto.getConnections()) {
-            UUID connectionId = connection.getId();
-
-            if (connectionId != null) {
-                incomingExistingConnectionsIds.add(connectionId);
-                incomingExistingConnections.add(connection);
-            } else {
-                incomingNewConnections.add(connection);
             }
         }
     }
@@ -249,21 +267,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void storeIncomingInteractions(ControlStructureInsertDto dto, Set<UUID> incomingExistingInteractionsIds) {
-        for (FacadeConnectionInsertDto connection : dto.getConnections()) {
-            if (connection.getInteractions() != null && !connection.getInteractions().isEmpty()) {
-                for (FacadeInteractionInsertDto interaction : connection.getInteractions()) {
-                    UUID interactionId = interaction.getId();
-
-                    if (interactionId != null) {
-                        incomingExistingInteractionsIds.add(interactionId);
-                    }
-                }
-            }
-        }
-    }
-
-    private void cleanUpRemovedInteractions(List<InteractionReadDto> dbInteractions, Set<UUID> incomingExistingInteractionsIds) {
+    private void cleanUpRemovedInteractions(List<InteractionReadDto> dbInteractions,
+                                            Set<UUID> incomingExistingInteractionsIds) {
         for (InteractionReadDto dbInteraction : dbInteractions) {
             if (!incomingExistingInteractionsIds.contains(dbInteraction.getId())) {
                 interactionService.deleteDirectlyById(dbInteraction.getId());
@@ -271,7 +276,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void cleanUpRemovedConnections(List<ConnectionReadDto> dbConnections, Set<UUID> incomingExistingConnectionsIds) {
+    private void cleanUpRemovedConnections(List<ConnectionReadDto> dbConnections,
+                                           Set<UUID> incomingExistingConnectionsIds) {
         for (ConnectionReadDto dbConnection : dbConnections) {
             if (!incomingExistingConnectionsIds.contains(dbConnection.getId())) {
                 connectionService.delete(dbConnection.getId());
@@ -279,7 +285,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void cleanUpRemovedComponents(List<ComponentReadDto> dbComponents, Set<UUID> incomingExistingComponentsIds) {
+    private void cleanUpRemovedComponents(List<ComponentReadDto> dbComponents,
+                                          Set<UUID> incomingExistingComponentsIds) {
         for (ComponentReadDto dbComponent : dbComponents) {
             if (!incomingExistingComponentsIds.contains(dbComponent.getId())) {
                 componentService.delete(dbComponent.getId());
