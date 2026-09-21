@@ -49,7 +49,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         Map<String, UUID> componentCodeToIdMap = new HashMap<>();
 
         if (dto.getComponents() != null && !dto.getComponents().isEmpty()) {
-            componentCodeToIdMap = saveComponents(dto.getComponents(), dto.getAnalysisId());
+            saveComponents(dto.getComponents(), dto.getAnalysisId(), componentCodeToIdMap);
         }
 
         if (dto.getConnections() != null && !dto.getConnections().isEmpty()) {
@@ -57,8 +57,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private Map<String, UUID> saveComponents(List<FacadeComponentInsertDto> components, UUID analysisId) {
-        Map<String, UUID> componentCodeToIdMap = new HashMap<>();
+    private void saveComponents(List<FacadeComponentInsertDto> components, UUID analysisId, Map<String, UUID> componentCodeToIdMap) {
         List<FacadeComponentInsertDto> componentsContainingFather = new ArrayList<>();
 
         for (FacadeComponentInsertDto facadeComponentDto : components) {
@@ -80,26 +79,22 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
 
         for (FacadeComponentInsertDto facadeComponentDto : componentsContainingFather) {
-            if (!facadeComponentDto.getFatherCode().isBlank() && facadeComponentDto.getFatherId() == null) {
-                UUID childId = componentCodeToIdMap.get(facadeComponentDto.getCode());
-                UUID fatherId = componentCodeToIdMap.get(facadeComponentDto.getFatherCode());
+            UUID childId = componentCodeToIdMap.get(facadeComponentDto.getCode());
+            UUID fatherId = componentCodeToIdMap.get(facadeComponentDto.getFatherCode());
 
-                if (childId != null && fatherId != null) {
-                    ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
-                            .name(facadeComponentDto.getName())
-                            .code(facadeComponentDto.getCode())
-                            .isVisible(facadeComponentDto.getIsVisible())
-                            .type(facadeComponentDto.getType())
-                            .border(facadeComponentDto.getBorder())
-                            .fatherId(fatherId)
-                            .build();
+            if (childId != null && fatherId != null) {
+                ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
+                        .name(facadeComponentDto.getName())
+                        .code(facadeComponentDto.getCode())
+                        .isVisible(facadeComponentDto.getIsVisible())
+                        .type(facadeComponentDto.getType())
+                        .border(facadeComponentDto.getBorder())
+                        .fatherId(fatherId)
+                        .build();
 
-                    componentService.update(childId, updateDto);
-                }
+                componentService.update(childId, updateDto);
             }
         }
-
-        return componentCodeToIdMap;
     }
 
     private void saveConnections(List<FacadeConnectionInsertDto> connections, UUID analysisId, Map<String, UUID> componentMap) {
@@ -127,7 +122,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
     private void saveInteractions(FacadeConnectionInsertDto facadeConnectionInsertDto, ConnectionReadDto savedConnection) {
         for (FacadeInteractionInsertDto facadeInteractionInsertDto : facadeConnectionInsertDto.getInteractions()) {
-            if(facadeInteractionInsertDto.getId() == null) {
+            if (facadeInteractionInsertDto.getId() == null) {
                 facadeInteractionInsertDto.setConnectionId(savedConnection.getId());
                 interactionService.insert(facadeInteractionInsertDto);
             } else {
@@ -166,12 +161,11 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         storeIncomingInteractions(dto, incomingExistingInteractionsIds);
 
         Map<String, UUID> componentCodeToIdMap = new HashMap<>();
-        if (!incomingNewComponents.isEmpty()) {
-            componentCodeToIdMap = saveComponents(incomingNewComponents, analysisId);
-        }
-
         for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
             componentCodeToIdMap.put(existingDto.getCode(), existingDto.getId());
+        }
+        if (!incomingNewComponents.isEmpty()) {
+            saveComponents(incomingNewComponents, analysisId, componentCodeToIdMap);
         }
 
         updateExistingComponents(incomingExistingComponents, componentCodeToIdMap);
@@ -208,22 +202,21 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             Map<String, UUID> componentCodeToIdMap) {
 
         for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
-            UUID fatherId = existingDto.getFatherId();
 
-            if (fatherId == null && existingDto.getFatherCode() != null && !existingDto.getFatherCode().isBlank()) {
-                fatherId = componentCodeToIdMap.get(existingDto.getFatherCode());
+            if (existingDto.getFatherCode() != null && !existingDto.getFatherCode().isBlank()) {
+                UUID fatherId = componentCodeToIdMap.get(existingDto.getFatherCode());
+
+                ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
+                        .name(existingDto.getName())
+                        .code(existingDto.getCode())
+                        .isVisible(existingDto.getIsVisible())
+                        .type(existingDto.getType())
+                        .border(existingDto.getBorder())
+                        .fatherId(fatherId)
+                        .build();
+
+                componentService.update(existingDto.getId(), updateDto);
             }
-
-            ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
-                    .name(existingDto.getName())
-                    .code(existingDto.getCode())
-                    .isVisible(existingDto.getIsVisible())
-                    .type(existingDto.getType())
-                    .border(existingDto.getBorder())
-                    .fatherId(fatherId)
-                    .build();
-
-            componentService.update(existingDto.getId(), updateDto);
         }
     }
 
@@ -232,7 +225,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             Set<UUID> incomingExistingConnectionsIds,
             List<FacadeConnectionInsertDto> incomingNewConnections,
             List<FacadeConnectionInsertDto> incomingExistingConnections) {
-        
+
         for (FacadeConnectionInsertDto connection : dto.getConnections()) {
             UUID connectionId = connection.getId();
 
@@ -267,8 +260,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             }
 
             List<FacadeInteractionInsertDto> interactions = existingDto.getInteractions();
-            if (interactions != null && !interactions.isEmpty()){
-                    saveInteractions(existingDto, connectionService.findById(existingDto.getId()));
+            if (interactions != null && !interactions.isEmpty()) {
+                saveInteractions(existingDto, connectionService.findById(existingDto.getId()));
             }
         }
     }
@@ -287,7 +280,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void cleanUpRemovedInteractions(List<InteractionReadDto> dbInteractions, Set<UUID> incomingExistingInteractionsIds){
+    private void cleanUpRemovedInteractions(List<InteractionReadDto> dbInteractions, Set<UUID> incomingExistingInteractionsIds) {
         for (InteractionReadDto dbInteraction : dbInteractions) {
             if (!incomingExistingInteractionsIds.contains(dbInteraction.getId())) {
                 interactionService.deleteDirectlyById(dbInteraction.getId());
@@ -295,7 +288,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void cleanUpRemovedConnections(List<ConnectionReadDto> dbConnections, Set<UUID> incomingExistingConnectionsIds){
+    private void cleanUpRemovedConnections(List<ConnectionReadDto> dbConnections, Set<UUID> incomingExistingConnectionsIds) {
         for (ConnectionReadDto dbConnection : dbConnections) {
             if (!incomingExistingConnectionsIds.contains(dbConnection.getId())) {
                 connectionService.delete(dbConnection.getId());
@@ -303,7 +296,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         }
     }
 
-    private void cleanUpRemovedComponents(List<ComponentReadDto> dbComponents, Set<UUID> incomingExistingComponentsIds){
+    private void cleanUpRemovedComponents(List<ComponentReadDto> dbComponents, Set<UUID> incomingExistingComponentsIds) {
         for (ComponentReadDto dbComponent : dbComponents) {
             if (!incomingExistingComponentsIds.contains(dbComponent.getId())) {
                 componentService.delete(dbComponent.getId());
