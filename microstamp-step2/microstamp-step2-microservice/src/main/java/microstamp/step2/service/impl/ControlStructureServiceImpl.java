@@ -221,23 +221,25 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             Map<String, UUID> componentCodeToIdMap) {
 
         for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
+            UUID fatherId = null;
 
             if (existingDto.getFatherCode() != null && !existingDto.getFatherCode().isBlank()) {
-                UUID fatherId = componentCodeToIdMap.get(existingDto.getFatherCode());
-
-                ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
-                        .name(existingDto.getName())
-                        .code(existingDto.getCode())
-                        .isVisible(existingDto.getIsVisible())
-                        .type(existingDto.getType())
-                        .border(existingDto.getBorder())
-                        .fatherId(fatherId)
-                        .build();
-
-                componentService.update(existingDto.getId(), updateDto);
+                fatherId = componentCodeToIdMap.get(existingDto.getFatherCode());
             }
+
+            ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
+                    .name(existingDto.getName())
+                    .code(existingDto.getCode())
+                    .isVisible(existingDto.getIsVisible())
+                    .type(existingDto.getType())
+                    .border(existingDto.getBorder())
+                    .fatherId(fatherId)
+                    .build();
+
+            componentService.update(existingDto.getId(), updateDto);
         }
     }
+
 
     private void updateExistingConnections(
             List<FacadeConnectionInsertDto> incomingExistingConnections,
