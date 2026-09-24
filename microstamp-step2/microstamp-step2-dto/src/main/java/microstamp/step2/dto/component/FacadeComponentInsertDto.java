@@ -1,11 +1,7 @@
 package microstamp.step2.dto.component;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import microstamp.step2.enumeration.ComponentType;
 import microstamp.step2.enumeration.Style;
 
@@ -14,6 +10,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class FacadeComponentInsertDto {
