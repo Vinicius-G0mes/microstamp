@@ -140,17 +140,17 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 ConnectionReadDto savedConnection = connectionService.insert(connectionInsertDto);
 
                 if (facadeConnectionInsertDto.getInteractions() != null && !facadeConnectionInsertDto.getInteractions().isEmpty()) {
-                    saveInteractions(facadeConnectionInsertDto, savedConnection);
+                    saveInteractions(facadeConnectionInsertDto, savedConnection.getId());
                 }
             }
         }
     }
 
     private void saveInteractions(FacadeConnectionInsertDto facadeConnectionInsertDto,
-                                  ConnectionReadDto savedConnection) {
+                                  UUID connectionId) {
         for (FacadeInteractionInsertDto facadeInteractionInsertDto : facadeConnectionInsertDto.getInteractions()) {
             if (facadeInteractionInsertDto.getId() == null) {
-                facadeInteractionInsertDto.setConnectionId(savedConnection.getId());
+                facadeInteractionInsertDto.setConnectionId(connectionId);
                 interactionService.insert(facadeInteractionInsertDto);
             } else {
                 InteractionUpdateDto interactionUpdateDto = InteractionUpdateDto.builder()
@@ -264,7 +264,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
             List<FacadeInteractionInsertDto> interactions = existingDto.getInteractions();
             if (interactions != null && !interactions.isEmpty()) {
-                saveInteractions(existingDto, connectionService.findById(existingDto.getId()));
+                saveInteractions(existingDto, existingDto.getId());
             }
         }
     }
