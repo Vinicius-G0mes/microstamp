@@ -25,10 +25,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import static microstamp.step2.enumeration.ComponentType.*;
 import static microstamp.step2.enumeration.InteractionType.*;
@@ -58,7 +56,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When analysis is not found > Throw an exception")
-    void WhenAnalysisIsNotFoundThrowAnException() {
+    void whenAnalysisIsNotFoundThrowAnException() {
         UUID analysisId = UUID.randomUUID();
         ControlStructureInsertDto dto = ControlStructureInsertDto.builder()
                 .analysisId(analysisId)
@@ -73,7 +71,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When a new component is added to payload > insert component successfully")
-    void WhenNewComponentIsAddedShouldInsertComponentSuccessfully() {
+    void whenNewComponentIsAddedShouldInsertComponentSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID newCompId = UUID.randomUUID();
@@ -124,7 +122,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When a new connection is added to payload > insert connection successfully")
-    void WhenNewConnectionIsAddedShouldInsertConnectionSuccessfully() {
+    void whenNewConnectionIsAddedShouldInsertConnectionSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID sourceId = UUID.randomUUID();
@@ -189,7 +187,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When a new interaction is added to a connection > insert interaction successfully")
-    void WhenNewInteractionIsAddedShouldInsertInteractionSuccessfully() {
+    void whenNewInteractionIsAddedShouldInsertInteractionSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID sourceId = UUID.randomUUID();
@@ -256,7 +254,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When control structure contains new elements > Insert all elements successfully")
-    void WhenControlStructureContainsNewElementsInsertAllElementsSuccessfully() {
+    void whenControlStructureContainsNewElementsInsertAllElementsSuccessfully() {
         UUID analysisId = UUID.randomUUID();
         UUID generatedCompId1 = UUID.randomUUID();
         UUID generatedCompId2 = UUID.randomUUID();
@@ -319,7 +317,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When updating existing elements > Call update on services successfully")
-    void WhenUpdatingExistingElementsCallUpdateOnServicesSuccessfully() {
+    void whenUpdatingExistingElementsCallUpdateOnServicesSuccessfully() {
         UUID analysisId = UUID.randomUUID();
         UUID compId = UUID.randomUUID();
         UUID connId = UUID.randomUUID();
@@ -374,7 +372,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When elements are omitted in payload > Clean up missing elements from database")
-    void WhenElementsAreOmittedInPayloadCleanUpMissingElementsFromDatabase() {
+    void whenElementsAreOmittedInPayloadCleanUpMissingElementsFromDatabase() {
         UUID analysisId = UUID.randomUUID();
         UUID oldCompId = UUID.randomUUID();
         UUID oldConnId = UUID.randomUUID();
@@ -409,7 +407,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When existing connection source or target code is not found > Throw an exception")
-    void WhenExistingConnectionSourceOrTargetCodeIsNotFoundThrowAnException() {
+    void whenExistingConnectionSourceOrTargetCodeIsNotFoundThrowAnException() {
         UUID analysisId = UUID.randomUUID();
         UUID connId = UUID.randomUUID();
 
@@ -436,7 +434,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When father component is persisted in database and child is added in payload > Relate child to existing father successfully")
-    void WhenFatherPersistedAndChildInPayloadRelatesChildToFatherSuccessfully() {
+    void whenFatherPersistedAndChildInPayloadRelatesChildToFatherSuccessfully() {
         UUID analysisId = UUID.randomUUID();
         UUID fatherCompId = UUID.randomUUID();
         UUID childCompId = UUID.randomUUID();
@@ -483,7 +481,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When two components are persisted in database > Relate one as father of the other on update successfully")
-    void WhenTwoComponentsPersistedRelatesFatherAndChildOnUpdateSuccessfully() {
+    void whenTwoComponentsPersistedRelatesFatherAndChildOnUpdateSuccessfully() {
         UUID analysisId = UUID.randomUUID();
         UUID fatherCompId = UUID.randomUUID();
         UUID childCompId = UUID.randomUUID();
@@ -529,7 +527,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When father and child components are both new in payload > Insert both and relate child to new father successfully")
-    void WhenFatherAndChildInPayloadInsertsAndRelatesBothSuccessfully() {
+    void whenFatherAndChildInPayloadInsertsAndRelatesBothSuccessfully() {
         UUID analysisId = UUID.randomUUID();
         UUID generatedFatherId = UUID.randomUUID();
         UUID generatedChildId = UUID.randomUUID();
@@ -575,7 +573,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When child component is persisted and new father is added in payload > Insert father and update child with new father relation successfully")
-    void WhenChildPersistedAndFatherInPayloadInsertsFatherAndUpdateChildSuccessfully() {
+    void whenChildPersistedAndFatherInPayloadInsertsFatherAndUpdateChildSuccessfully() {
         UUID analysisId = UUID.randomUUID();
         UUID generatedFatherId = UUID.randomUUID();
         UUID existingChildId = UUID.randomUUID();
@@ -621,7 +619,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When an existing connection source is altered > update connection source successfully")
-    void WhenAConnectionSourceIsAlteredUpdateConnectionSuccessfully() {
+    void whenAConnectionSourceIsAlteredUpdateConnectionSuccessfully() {
         UUID analysisId = UUID.randomUUID();
         UUID connectionId = UUID.randomUUID();
         UUID oldSourceId = UUID.randomUUID();
@@ -682,7 +680,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When an existing connection target is altered > update connection target successfully")
-    void WhenConnectionTargetIsAlteredShouldUpdateConnectionTargetSuccessfully() {
+    void whenConnectionTargetIsAlteredShouldUpdateConnectionTargetSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID connectionId = UUID.randomUUID();
@@ -749,7 +747,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When component attributes are altered > update component successfully")
-    void WhenComponentAttributesAreAlteredShouldUpdateComponentSuccessfully() {
+    void whenComponentAttributesAreAlteredShouldUpdateComponentSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID componentId = UUID.randomUUID();
@@ -799,7 +797,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When connection style is altered > update connection style successfully")
-    void WhenConnectionStyleIsAlteredShouldUpdateConnectionStyleSuccessfully() {
+    void whenConnectionStyleIsAlteredShouldUpdateConnectionStyleSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID connectionId = UUID.randomUUID();
@@ -858,7 +856,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When a component is removed from payload > delete component from database successfully")
-    void WhenComponentIsRemovedFromPayloadShouldDeleteComponentSuccessfully() {
+    void whenComponentIsRemovedFromPayloadShouldDeleteComponentSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID comp1Id = UUID.randomUUID();
@@ -904,7 +902,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When a connection is removed from payload > delete connection from database successfully")
-    void WhenConnectionIsRemovedFromPayloadShouldDeleteConnectionSuccessfully() {
+    void whenConnectionIsRemovedFromPayloadShouldDeleteConnectionSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID sourceId = UUID.randomUUID();
@@ -960,7 +958,7 @@ public class ControlStructureServiceUnitTest {
 
     @Test
     @DisplayName("When an interaction is removed from a connection > delete interaction from database successfully")
-    void WhenInteractionIsRemovedFromConnectionShouldDeleteInteractionSuccessfully() {
+    void whenInteractionIsRemovedFromConnectionShouldDeleteInteractionSuccessfully() {
         // ARRANGE
         UUID analysisId = UUID.randomUUID();
         UUID sourceId = UUID.randomUUID();
@@ -1022,11 +1020,63 @@ public class ControlStructureServiceUnitTest {
         verify(interactionService, times(1)).deleteDirectlyById(interactionId);
     }
 
-    // Fixture Suppliers
-    private final Supplier<ControlStructureInsertDto> assembleEmptyControlStructureInsert = () ->
-            ControlStructureInsertDto.builder()
-                    .analysisId(UUID.randomUUID())
-                    .components(new ArrayList<>())
-                    .connections(new ArrayList<>())
-                    .build();
+    @Test
+    @DisplayName("When a father is deleted but the child is sent in the payload without the " +
+            "relationship > delete father and keep child successfully")
+    void whenFatherIsDeletedButChildIsSentWithoutFatherShouldDeleteFatherAndKeepChild(){
+        UUID analysisId = UUID.randomUUID();
+        UUID fatherId = UUID.randomUUID();
+        UUID childId = UUID.randomUUID();
+
+        // Insert Dto mock
+        FacadeComponentInsertDto childInsertDto = FacadeComponentInsertDto.builder()
+                .id(childId)
+                .name("Child Component")
+                .code("C.02")
+                .isVisible(true)
+                .fatherCode(null)
+                .fatherId(null)
+                .border(SOLID)
+                .type(CONTROLLED_PROCESS)
+                .build();
+
+        // Db mocks
+        ComponentReadDto fatherReadDto = ComponentReadDto.builder()
+                .id(fatherId)
+                .name("Parent Component")
+                .code("C.01")
+                .isVisible(true)
+                .father(null)
+                .border(SOLID)
+                .type("Controlled_Process")
+                .responsibilities(null)
+                .variables(null).build();
+
+        ComponentReadDto childReadDto = ComponentReadDto.builder()
+                .id(childId)
+                .name("Child Component")
+                .code("C.02")
+                .isVisible(true)
+                .father(fatherReadDto)
+                .border(SOLID)
+                .type("Controlled_Process")
+                .responsibilities(null)
+                .variables(null)
+                .build();
+
+
+        when(componentService.findByAnalysisId(analysisId)).thenReturn(List.of(fatherReadDto, childReadDto));
+        when(connectionService.findByAnalysisId(analysisId)).thenReturn(List.of());
+        when(interactionService.findByAnalysisId(analysisId)).thenReturn(List.of());
+
+        ControlStructureInsertDto payload = ControlStructureInsertDto.builder().analysisId(analysisId).components(List.of(childInsertDto)).connections(List.of()).build();
+
+        service.saveControlStructure(payload);
+
+        verify(componentService, times(1)).delete(fatherId);
+        verify(componentService, never()).delete(childId);
+        verify(componentService, times(1)).update(eq(childId), argThat(dto ->
+                dto != null && dto.getCode().equals("C.02") && dto.getFatherId() == null));
+
+    }
 }
