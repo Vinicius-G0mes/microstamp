@@ -50,6 +50,12 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
         List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
 
+        Map<UUID, ComponentReadDto> dbComponentsMap = new HashMap<>();
+
+        for (ComponentReadDto dbComp : dbComponents) {
+            dbComponentsMap.put(dbComp.getId(), dbComp);
+        }
+
         List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
         List<FacadeComponentInsertDto> incomingExistingComponents = new LinkedList<>();
         Set<UUID> incomingExistingComponentsIds = new HashSet<>();
@@ -71,7 +77,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             saveComponents(incomingNewComponents, analysisId, componentCodeToIdMap);
         }
 
-        updateExistingComponents(incomingExistingComponents, componentCodeToIdMap);
+        updateExistingComponents(incomingExistingComponents, dbComponentsMap, componentCodeToIdMap);
 
         saveConnections(incomingNewConnections, analysisId, componentCodeToIdMap);
         updateExistingConnections(incomingExistingConnections, componentCodeToIdMap);
@@ -218,25 +224,33 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
     private void updateExistingComponents(
             List<FacadeComponentInsertDto> incomingExistingComponents,
+            Map<UUID, ComponentReadDto> dbComponentsMap,
             Map<String, UUID> componentCodeToIdMap) {
 
         for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
-            UUID fatherId = null;
 
-            if (existingDto.getFatherCode() != null && !existingDto.getFatherCode().isBlank()) {
-                fatherId = componentCodeToIdMap.get(existingDto.getFatherCode());
+            ComponentReadDto dbComponent = dbComponentsMap.get(existingDto.getId());
+            Boolean hasComponentChanged = hasComponentChanged(existingDto, dbComponent);
+
+            if (hasComponentChanged) {
+
+                UUID fatherId = null;
+
+                if (existingDto.getFatherCode() != null && !existingDto.getFatherCode().isBlank()) {
+                    fatherId = componentCodeToIdMap.get(existingDto.getFatherCode());
+                }
+
+                ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
+                        .name(existingDto.getName())
+                        .code(existingDto.getCode())
+                        .isVisible(existingDto.getIsVisible())
+                        .type(existingDto.getType())
+                        .border(existingDto.getBorder())
+                        .fatherId(fatherId)
+                        .build();
+
+                componentService.update(existingDto.getId(), updateDto);
             }
-
-            ComponentUpdateDto updateDto = ComponentUpdateDto.builder()
-                    .name(existingDto.getName())
-                    .code(existingDto.getCode())
-                    .isVisible(existingDto.getIsVisible())
-                    .type(existingDto.getType())
-                    .border(existingDto.getBorder())
-                    .fatherId(fatherId)
-                    .build();
-
-            componentService.update(existingDto.getId(), updateDto);
         }
     }
 
@@ -294,5 +308,20 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 componentService.delete(dbComponent.getId());
             }
         }
+    }
+
+    private Boolean hasComponentChanged(FacadeComponentInsertDto incomingDto,
+                                        ComponentReadDto dbDto) {
+
+        String fatherCode = null;
+        if (dbDto.getFather() != null)
+            fatherCode = dbDto.getFather().getCode();
+
+        return !Objects.equals(incomingDto.getCode(), dbDto.getCode())
+                || !Objects.equals(incomingDto.getBorder(), dbDto.getBorder())
+                || !Objects.equals(incomingDto.getFatherCode(), fatherCode)
+                || !Objects.equals(incomingDto.getIsVisible(), dbDto.getIsVisible())
+                || !Objects.equals(incomingDto.getName(), dbDto.getName())
+                || !Objects.equals(incomingDto.getType().getFormattedName(), dbDto.getType());
     }
 }
