@@ -56,6 +56,12 @@ public class ControlStructureServiceImpl implements ControlStructureService {
             dbComponentsMap.put(dbComp.getId(), dbComp);
         }
 
+        Map<UUID, ConnectionReadDto> dbConnectionsMap = new HashMap<>();
+
+        for (ConnectionReadDto dbConnection : dbConnections) {
+            dbConnectionsMap.put(dbConnection.getId(), dbConnection);
+        }
+
         List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
         List<FacadeComponentInsertDto> incomingExistingComponents = new LinkedList<>();
         Set<UUID> incomingExistingComponentsIds = new HashSet<>();
@@ -80,7 +86,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         updateExistingComponents(incomingExistingComponents, dbComponentsMap, componentCodeToIdMap);
 
         saveConnections(incomingNewConnections, analysisId, componentCodeToIdMap);
-        updateExistingConnections(incomingExistingConnections, componentCodeToIdMap);
+        updateExistingConnections(incomingExistingConnections, dbConnectionsMap, componentCodeToIdMap);
 
         cleanUpRemovedInteractions(dbInteractions, incomingExistingInteractionsIds);
         cleanUpRemovedConnections(dbConnections, incomingExistingConnectionsIds);
@@ -251,13 +257,23 @@ public class ControlStructureServiceImpl implements ControlStructureService {
 
     private void updateExistingConnections(
             List<FacadeConnectionInsertDto> incomingExistingConnections,
+            Map<UUID, ConnectionReadDto> dbConnectionsMap,
             Map<String, UUID> componentCodeToIdMap) {
 
         for (FacadeConnectionInsertDto existingDto : incomingExistingConnections) {
+
             UUID sourceId = componentCodeToIdMap.get(existingDto.getSourceCode());
             UUID targetId = componentCodeToIdMap.get(existingDto.getTargetCode());
 
-            if (sourceId != null && targetId != null) {
+            if (sourceId == null || targetId == null) {
+                throw new Step2NotFoundException("Component Source/Target not found for connection",
+                        existingDto.getCode());
+            }
+
+            Boolean hasConnectionChanged = hasConnectionChanged(existingDto,
+                    dbConnectionsMap.get(existingDto.getId()));
+
+            if (hasConnectionChanged) {
                 ConnectionUpdateDto updateDto = ConnectionUpdateDto.builder()
                         .code(existingDto.getCode())
                         .sourceId(sourceId)
@@ -266,8 +282,6 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                         .build();
 
                 connectionService.update(existingDto.getId(), updateDto);
-            } else {
-                throw new Step2NotFoundException("Component Source/Target not found for connection", existingDto.getCode());
             }
 
             List<FacadeInteractionInsertDto> interactions = existingDto.getInteractions();
@@ -327,5 +341,13 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 || !Objects.equals(incomingDto.getIsVisible(), dbDto.getIsVisible())
                 || !Objects.equals(incomingDto.getName(), dbDto.getName())
                 || !Objects.equals(incomingDto.getType().getFormattedName(), dbDto.getType());
+    }
+
+    private Boolean hasConnectionChanged(FacadeConnectionInsertDto incomingDto,
+                                         ConnectionReadDto dbDto) {
+        return !Objects.equals(incomingDto.getCode(), dbDto.getCode())
+                || !Objects.equals(incomingDto.getSourceCode(), dbDto.getSource().getCode())
+                || !Objects.equals(incomingDto.getTargetCode(), dbDto.getTarget().getCode())
+                || !Objects.equals(incomingDto.getStyle(), dbDto.getStyle());
     }
 }
