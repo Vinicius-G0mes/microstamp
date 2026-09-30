@@ -159,13 +159,7 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 facadeInteractionInsertDto.setConnectionId(connectionId);
                 interactionService.insert(facadeInteractionInsertDto);
             } else {
-                InteractionUpdateDto interactionUpdateDto = InteractionUpdateDto.builder()
-                        .code(facadeInteractionInsertDto.getCode())
-                        .name(facadeInteractionInsertDto.getName())
-                        .interactionType(facadeInteractionInsertDto.getInteractionType())
-                        .build();
-
-                interactionService.update(facadeInteractionInsertDto.getId(), interactionUpdateDto);
+                updateExistingInteraction(facadeInteractionInsertDto);
             }
         }
     }
@@ -281,6 +275,16 @@ public class ControlStructureServiceImpl implements ControlStructureService {
                 saveInteractions(existingDto, existingDto.getId());
             }
         }
+    }
+
+    private void updateExistingInteraction(FacadeInteractionInsertDto facadeInteractionInsertDto) {
+        InteractionUpdateDto interactionUpdateDto = InteractionUpdateDto.builder()
+                .code(facadeInteractionInsertDto.getCode())
+                .name(facadeInteractionInsertDto.getName())
+                .interactionType(facadeInteractionInsertDto.getInteractionType())
+                .build();
+
+        interactionService.update(facadeInteractionInsertDto.getId(), interactionUpdateDto);
     }
 
     private void cleanUpRemovedInteractions(List<InteractionReadDto> dbInteractions,
