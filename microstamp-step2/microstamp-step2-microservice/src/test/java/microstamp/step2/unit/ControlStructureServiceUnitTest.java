@@ -79,7 +79,7 @@ public class ControlStructureServiceUnitTest {
         // Payload brings a new component
         FacadeComponentInsertDto newComponentInsertDto = FacadeComponentInsertDto.builder()
                 .code("C.01")
-                .name("Novo Controlador")
+                .name("New Controller")
                 .border(SOLID)
                 .isVisible(true)
                 .type(CONTROLLER)
@@ -100,7 +100,7 @@ public class ControlStructureServiceUnitTest {
         ComponentReadDto createdComponentDto = ComponentReadDto.builder()
                 .id(newCompId)
                 .code("C.01")
-                .name("Novo Controlador")
+                .name("New Controller")
                 .border(SOLID)
                 .isVisible(true)
                 .type("Controller")
@@ -115,7 +115,7 @@ public class ControlStructureServiceUnitTest {
         verify(componentService, times(1)).insert(argThat(dto ->
                 dto != null
                         && "C.01".equals(dto.getCode())
-                        && "Novo Controlador".equals(dto.getName())
+                        && "New Controller".equals(dto.getName())
                         && analysisId.equals(dto.getAnalysisId())
         ));
     }
@@ -209,7 +209,7 @@ public class ControlStructureServiceUnitTest {
         // New interaction Dto
         FacadeInteractionInsertDto newInteractionInsertDto = new FacadeInteractionInsertDto();
         newInteractionInsertDto.setCode("IN.01");
-        newInteractionInsertDto.setName("Ação de Controle A");
+        newInteractionInsertDto.setName("Control Action 1");
 
         // Payload bringing the connection + interaction
         FacadeConnectionInsertDto connectionInsertDto = FacadeConnectionInsertDto.builder()
@@ -263,17 +263,17 @@ public class ControlStructureServiceUnitTest {
         // 1. Incoming DTOs without IDs
         FacadeComponentInsertDto newComp1 = new FacadeComponentInsertDto();
         newComp1.setCode("C.01");
-        newComp1.setName("Motorista");
+        newComp1.setName("Driver");
         newComp1.setType(CONTROLLER);
 
         FacadeComponentInsertDto newComp2 = new FacadeComponentInsertDto();
         newComp2.setCode("C.02");
-        newComp2.setName("Carro");
+        newComp2.setName("Car");
         newComp2.setType(CONTROLLED_PROCESS);
 
         FacadeInteractionInsertDto newInteraction = new FacadeInteractionInsertDto();
         newInteraction.setCode("I.01");
-        newInteraction.setName("Acelera");
+        newInteraction.setName("Speed up");
         newInteraction.setInteractionType(CONTROL_ACTION);
 
         FacadeConnectionInsertDto newConnection = new FacadeConnectionInsertDto();
@@ -327,13 +327,13 @@ public class ControlStructureServiceUnitTest {
         FacadeComponentInsertDto existingComp = new FacadeComponentInsertDto();
         existingComp.setId(compId);
         existingComp.setCode("C.01");
-        existingComp.setName("Motorista Atualizado");
+        existingComp.setName("Updated driver");
         existingComp.setType(CONTROLLER);
 
         FacadeInteractionInsertDto existingInteraction = new FacadeInteractionInsertDto();
         existingInteraction.setId(interactionId);
         existingInteraction.setCode("I.01");
-        existingInteraction.setName("Acelera Forte");
+        existingInteraction.setName("Speed up");
         existingInteraction.setInteractionType(CONTROL_ACTION);
 
         FacadeConnectionInsertDto existingConnection = new FacadeConnectionInsertDto();
@@ -443,13 +443,13 @@ public class ControlStructureServiceUnitTest {
         FacadeComponentInsertDto existingFather = new FacadeComponentInsertDto();
         existingFather.setId(fatherCompId);
         existingFather.setCode("C.01");
-        existingFather.setName("Controlador");
+        existingFather.setName("Controller 1");
         existingFather.setType(CONTROLLER);
 
         // New child referencing the father "C.01"
         FacadeComponentInsertDto newChild = new FacadeComponentInsertDto();
         newChild.setCode("C.02");
-        newChild.setName("Atuador");
+        newChild.setName("Child 1");
         newChild.setType(CONTROLLED_PROCESS);
         newChild.setFatherCode("C.01");
 
@@ -490,14 +490,14 @@ public class ControlStructureServiceUnitTest {
         FacadeComponentInsertDto existingFather = new FacadeComponentInsertDto();
         existingFather.setId(fatherCompId);
         existingFather.setCode("C.01");
-        existingFather.setName("Controlador Principal");
+        existingFather.setName("Main Controller");
         existingFather.setType(CONTROLLER);
 
         // Child persisted, updated to reference the father
         FacadeComponentInsertDto existingChild = new FacadeComponentInsertDto();
         existingChild.setId(childCompId);
         existingChild.setCode("C.02");
-        existingChild.setName("Atuador Secundário");
+        existingChild.setName("Controlled process 1");
         existingChild.setType(CONTROLLED_PROCESS);
         existingChild.setFatherCode("C.01");
 
@@ -535,13 +535,13 @@ public class ControlStructureServiceUnitTest {
         // New Father
         FacadeComponentInsertDto newFather = new FacadeComponentInsertDto();
         newFather.setCode("C.01");
-        newFather.setName("Novo Controlador");
+        newFather.setName("New Controller");
         newFather.setType(CONTROLLER);
 
         // New child
         FacadeComponentInsertDto newChild = new FacadeComponentInsertDto();
         newChild.setCode("C.02");
-        newChild.setName("Novo Atuador");
+        newChild.setName("New Child");
         newChild.setType(CONTROLLED_PROCESS);
         newChild.setFatherCode("C.01");
 
@@ -581,14 +581,14 @@ public class ControlStructureServiceUnitTest {
         // New father in the payload
         FacadeComponentInsertDto newFather = new FacadeComponentInsertDto();
         newFather.setCode("C.01");
-        newFather.setName("Novo Controlador Pai");
+        newFather.setName("New father controller");
         newFather.setType(CONTROLLER);
 
         // Persisted child
         FacadeComponentInsertDto existingChild = new FacadeComponentInsertDto();
         existingChild.setId(existingChildId);
         existingChild.setCode("C.02");
-        existingChild.setName("Atuador Existente");
+        existingChild.setName("Existing Actuator");
         existingChild.setType(CONTROLLED_PROCESS);
         existingChild.setFatherCode("C.01");
 
@@ -756,7 +756,7 @@ public class ControlStructureServiceUnitTest {
         ComponentReadDto existingComponentDto = ComponentReadDto.builder()
                 .id(componentId)
                 .code("C.01")
-                .name("Motorista")
+                .name("Driver")
                 .border(SOLID)
                 .isVisible(true)
                 .type("Controller")
@@ -766,7 +766,7 @@ public class ControlStructureServiceUnitTest {
         FacadeComponentInsertDto updatedComponentInsertDto = FacadeComponentInsertDto.builder()
                 .id(componentId)
                 .code("C.01")
-                .name("Condutor Principal")
+                .name("Main conductor")
                 .border(DASHED)
                 .isVisible(true)
                 .type(CONTROLLER)
@@ -790,7 +790,7 @@ public class ControlStructureServiceUnitTest {
         // validates if component received new name and border style
         verify(componentService, times(1)).update(eq(componentId), argThat(dto ->
                 dto != null
-                        && "Condutor Principal".equals(dto.getName())
+                        && "Main conductor".equals(dto.getName())
                         && DASHED.equals(dto.getBorder())
         ));
     }
