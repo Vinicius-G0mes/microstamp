@@ -50,17 +50,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         List<ConnectionReadDto> dbConnections = connectionService.findByAnalysisId(analysisId);
         List<ComponentReadDto> dbComponents = componentService.findByAnalysisId(analysisId);
 
-        Map<UUID, ComponentReadDto> dbComponentsMap = new HashMap<>();
-
-        for (ComponentReadDto dbComp : dbComponents) {
-            dbComponentsMap.put(dbComp.getId(), dbComp);
-        }
-
-        Map<UUID, ConnectionReadDto> dbConnectionsMap = new HashMap<>();
-
-        for (ConnectionReadDto dbConnection : dbConnections) {
-            dbConnectionsMap.put(dbConnection.getId(), dbConnection);
-        }
+        Map<UUID, ComponentReadDto> dbComponentsMap = createIdToComponentMap(dbComponents);
+        Map<UUID, ConnectionReadDto> dbConnectionsMap = createIdToConnectionMap(dbConnections);
 
         List<FacadeComponentInsertDto> incomingNewComponents = new LinkedList<>();
         List<FacadeComponentInsertDto> incomingExistingComponents = new LinkedList<>();
@@ -75,13 +66,8 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         Set<UUID> incomingExistingInteractionsIds = new HashSet<>();
         storeIncomingInteractions(dto, incomingExistingInteractionsIds);
 
-        Map<String, UUID> componentCodeToIdMap = new HashMap<>();
-        for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
-            componentCodeToIdMap.put(existingDto.getCode(), existingDto.getId());
-        }
-        if (!incomingNewComponents.isEmpty()) {
-            saveComponents(incomingNewComponents, analysisId, componentCodeToIdMap);
-        }
+        Map<String, UUID> componentCodeToIdMap = createComponentCodeToIdMap(
+                analysisId, incomingExistingComponents, incomingNewComponents);
 
         updateExistingComponents(incomingExistingComponents, dbComponentsMap, componentCodeToIdMap);
 
@@ -91,6 +77,43 @@ public class ControlStructureServiceImpl implements ControlStructureService {
         cleanUpRemovedInteractions(dbInteractions, incomingExistingInteractionsIds);
         cleanUpRemovedConnections(dbConnections, incomingExistingConnectionsIds);
         cleanUpRemovedComponents(dbComponents, incomingExistingComponentsIds);
+    }
+
+    private Map<UUID, ComponentReadDto> createIdToComponentMap(List<ComponentReadDto> dbComponents){
+        Map<UUID, ComponentReadDto> dbComponentsMap = new HashMap<>();
+
+        for (ComponentReadDto dbComp : dbComponents) {
+            dbComponentsMap.put(dbComp.getId(), dbComp);
+        }
+
+        return dbComponentsMap;
+    }
+
+    private Map<UUID, ConnectionReadDto> createIdToConnectionMap(List<ConnectionReadDto> dbConnections){
+        Map<UUID, ConnectionReadDto> dbConnectionsMap = new HashMap<>();
+
+        for (ConnectionReadDto dbConnection : dbConnections) {
+            dbConnectionsMap.put(dbConnection.getId(), dbConnection);
+        }
+
+        return dbConnectionsMap;
+    }
+
+    private Map<String, UUID> createComponentCodeToIdMap(
+            UUID analysisId,
+            List<FacadeComponentInsertDto> incomingExistingComponents,
+            List<FacadeComponentInsertDto> incomingNewComponents){
+
+        Map<String, UUID> componentCodeToIdMap = new HashMap<>();
+
+        for (FacadeComponentInsertDto existingDto : incomingExistingComponents) {
+            componentCodeToIdMap.put(existingDto.getCode(), existingDto.getId());
+        }
+        if (!incomingNewComponents.isEmpty()) {
+            saveComponents(incomingNewComponents, analysisId, componentCodeToIdMap);
+        }
+
+        return componentCodeToIdMap;
     }
 
     private void saveComponents(List<FacadeComponentInsertDto> components,
